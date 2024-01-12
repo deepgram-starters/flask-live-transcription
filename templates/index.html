@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Deepgram Test</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="../static/style.css" />
+    <script
+      src="https://cdn.socket.io/4.5.3/socket.io.min.js"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body class="">
+    <div class="content">
+      <img class="click" src="../static/click.png" />
+      <div class="button-container">
+        <input type="checkbox" id="record" class="mic-checkbox" />
+        <label for="record" class="mic-button">
+          <div class="mic">
+            <div class="mic-button-loader"></div>
+            <div class="mic-base"></div>
+          </div>
+          <div class="button-message">
+            <span>&nbsp;</span>
+            <span> START </span>
+          </div>
+        </label>
+      </div>
+    </div>
+    <h1>Captions by Deepgram</h1>
+    <div class="captions" id="captions">
+      <span>Realtime speech transcription API</span>
+    </div>
+    <div class="button-container">
+      <a
+        href="https://console.deepgram.com/signup"
+        class="info-button sign-up"
+        target="_blank"
+        >Sign Up</a
+      >
+      <a
+        href="https://developers.deepgram.com/docs/introduction"
+        class="info-button docs"
+        target="_blank"
+        >Read the Docs</a
+      >
+    </div>
+    <script src="../static/script.js"></script>
+  </body>
+</html>

@@ -1,0 +1,220 @@
+/* @import url(https://fonts.googleapis.com/css?family=Montserrat); */
+@import url("https://fonts.googleapis.com/css2?family=Arimo:wght@400;600;700");
+@import url("https://fonts.googleapis.com/css2?family=Inter");
+
+body {
+  color: white;
+  display: flex;
+  align-items: center;
+  font-family: "Inter", sans-serif;
+  justify-content: center;
+  flex-direction: column;
+  height: 90vh;
+  background-color: #000;
+  padding-top: 100px;
+}
+
+.content {
+  display: flex;
+  height: 30vh;
+  position: relative;
+  align-items: center;
+}
+
+.mic-checkbox {
+  display: none;
+}
+
+.mic-checkbox:checked + .mic-button {
+  transform: rotateY(180deg);
+}
+
+.button-container {
+  perspective: 500px;
+  -moz-perspective: 500px;
+  -webkit-perspective: 500px;
+}
+
+.mic-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  width: 200px;
+  border-radius: 100%;
+  transition: transform 0.4s;
+  border: 2px solid #47aca9;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  -moz-transform-style: preserve-3d;
+  position: relative;
+}
+
+.button-message,
+.mic {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  -moz-backface-visibility: hidden;
+}
+
+.button-message {
+  position: absolute;
+  width: 50px;
+  color: #fff;
+  font-family: "Arimo", sans-serif;
+  font-weight: 700;
+  font-size: 25px;
+  text-align: center;
+  line-height: 20px;
+  z-index: 2;
+  transform: rotateY(0deg);
+  pointer-events: none;
+  left: 58px;
+  top: 71px;
+}
+
+.mic-button-loader {
+  position: absolute;
+  height: 202px;
+  width: 200px;
+  background-color: transparent;
+  transform: rotateY(180deg);
+  top: -61px;
+  left: -101px;
+}
+
+.mic-checkbox:checked + .mic-button > .mic > .mic-button-loader {
+  border-top: 2.5px solid #13ef95;
+  border-radius: 100%;
+  animation: borderLoader 1.3s 0.2s ease-in-out infinite;
+}
+
+.mic {
+  position: relative;
+  top: -17px;
+  border: 20px solid #47aca9;
+  height: 48px;
+  width: 0;
+  border-radius: 45px;
+  transform: rotateY(180deg);
+}
+
+.mic:after,
+.mic:before,
+.mic-base {
+  position: absolute;
+}
+
+.mic:after {
+  content: "";
+  top: 16px;
+  left: -30px;
+  height: 57px;
+  width: 50px;
+  background-color: transparent;
+  border: 5px solid #47aca9;
+  border-bottom-left-radius: 102px;
+  border-bottom-right-radius: 110px;
+  border-top: 0;
+}
+
+.mic:before {
+  content: "";
+  top: 77px;
+  left: -2px;
+  border-bottom: 18px solid #47aca9;
+  border-left: 3px solid #47aca9;
+  border-right: 3px solid #47aca9;
+}
+
+.mic-base {
+  top: 95px;
+  left: -14px;
+  border-bottom: 7px solid #47aca9;
+  border-left: 15px solid #47aca9;
+  border-right: 15px solid #47aca9;
+}
+
+@keyframes borderLoader {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(359deg);
+  }
+}
+
+#captions {
+  color: rgb(237, 237, 242);
+  font-size: 24px;
+  font-family: "Inter", sans-serif;
+  margin: 10px 0;
+  text-align: center;
+}
+
+h1 {
+  font-family: "Arimo", sans-serif;
+  font-size: 40px;
+  margin-top: 60px;
+  letter-spacing: -0.02em;
+  opacity: 1;
+  text-align: center;
+}
+
+.button-container {
+  display: flex;
+  gap: 16px;
+}
+
+.info-button {
+  display: flex;
+  align-items: center;
+  color: black;
+  height: 40px;
+  border-radius: 4px;
+  padding: 0 16px;
+  margin-top: 32px;
+  font-family: "Arimo", sans-serif;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.sign-up {
+  color: white;
+  position: relative;
+  background-origin: border-box;
+  background-image: linear-gradient(90deg, #201cff -91.5%, #13ef95 80.05%);
+  box-shadow: 2px 1000px 1px var(--md-code-background) inset;
+  z-index: 1;
+}
+
+.sign-up::before {
+  content: "";
+  border-radius: 4px;
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  bottom: 1px;
+  left: 1px;
+  background-color: black;
+  z-index: -1;
+}
+
+.docs {
+  background-color: white;
+}
+
+.docs::after {
+  font-family: FontAwesome;
+  font-weight: 900;
+  content: "\f061";
+  margin-right: -4px;
+  margin-left: 8px;
+}
+
+.click {
+  position: absolute;
+  height: 150px;
+  left: 20px;
+  top: -144px;
+}
