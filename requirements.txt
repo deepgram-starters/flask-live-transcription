@@ -1,0 +1,4 @@
+deepgram-sdk==3.0.3
+Flask==3.0.0
+Flask-SocketIO==5.3.6
+python-dotenv==1.0.0
