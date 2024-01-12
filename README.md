@@ -4,13 +4,9 @@ This sample demonstrates interacting with the Deepgram live streaming API using 
 
 ## Sign-up to Deepgram
 
-> Please leave this section unchanged, unless providing a UTM on the URL.
-
 Before you start, it's essential to generate a Deepgram API key to use in this project. [Sign-up now for Deepgram](https://console.deepgram.com/signup).
 
 ## Quickstart
-
-> Detail the manual steps to get started.
 
 ### Manual
 
@@ -30,9 +26,6 @@ pip install -r requirements.txt
 
 #### Edit the config file
 
-> Config file can be any appropriate file for the framework/language. For e.g.
-> Node is using a config.json file, while Python is only use .env files
-
 Copy the code from `sample.env` and create a new file called `.env`. Paste in the code and enter your API key you generated in the [Deepgram console](https://console.deepgram.com/).
 
 ```js
@@ -40,8 +33,6 @@ DEEPGRAM_API_KEY=%api_key%
 ```
 
 #### Run the application
-
-> to support the UI, it must always run on port 8080
 
 Once running, you can access the application in your browser at <http://127.0.0.1:5000>
 
