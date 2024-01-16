@@ -4,7 +4,7 @@ This sample demonstrates interacting with the Deepgram live streaming API using 
 
 ## Sign-up to Deepgram
 
-Before you start, it's essential to generate a Deepgram API key to use in this project. [Sign-up now for Deepgram](https://console.deepgram.com/signup).
+Before you start, it's essential to generate a Deepgram API key to use in this project. [Sign-up now for Deepgram and create an API key](https://console.deepgram.com/signup?jump=keys).
 
 ## Quickstart
 
