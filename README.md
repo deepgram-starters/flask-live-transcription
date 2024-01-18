@@ -1,6 +1,12 @@
 # Live Flask Starter
 
+ [![Discord](https://dcbadge.vercel.app/api/server/xWRaCDBtW4?style=flat)](https://discord.gg/xWRaCDBtW4)
+
 This sample demonstrates interacting with the Deepgram live streaming API using Flask, a micro web framework for Python.
+
+## What is Deepgram?
+
+[Deepgram](https://deepgram.com/) is a foundational AI company providing speech-to-text and language understanding capabilities to make data readable and actionable by human or machines.
 
 ## Sign-up to Deepgram
 
@@ -40,27 +46,19 @@ Once running, you can access the application in your browser at <http://127.0.0.
 python app.py
 ```
 
-## What is Deepgram?
 
-Deepgram is an AI speech platform which specializes in (NLU) Natural Language Understanding features and Transcription. It can help get the following from your audio.
-
-- [Speaker diarization](https://deepgram.com/product/speech-understanding/)
-- [Language detection](https://deepgram.com/product/speech-understanding/)
-- [Summarization](https://deepgram.com/product/speech-understanding/)
-- [Topic detection](https://deepgram.com/product/speech-understanding/)
-- [Language translation](https://deepgram.com/product/speech-understanding/)
-- [Sentiment analysis](https://deepgram.com/product/speech-understanding/)
-- [Entity detection](https://deepgram.com/product/speech-understanding/)
-- [Transcription](https://deepgram.com/product/transcription/)
-- [Redaction](https://deepgram.com/product/transcription/)
-
-## Create a Free Deepgram Account
-
-Before you start, it's essential to generate a Deepgram API key to use in our starter applications. [Sign-up now for Deepgram](https://console.deepgram.com/signup).
 
 ## Issue Reporting
 
 If you have found a bug or if you have a feature request, please report them at this repository issues section. Please do not report security vulnerabilities on the public GitHub issue tracker. The [Security Policy](./SECURITY.md) details the procedure for contacting Deepgram.
+
+## Getting Help
+
+We love to hear from you so if you have questions, comments or find a bug in the project, let us know! You can either:
+
+- [Open an issue in this repository](https://github.com/deepgram-starters/live-flask-starter/issues/new)
+- [Join the Deepgram Github Discussions Community](https://github.com/orgs/deepgram/discussions)
+- [Join the Deepgram Discord Community](https://discord.gg/xWRaCDBtW4)
 
 ## Author
 
