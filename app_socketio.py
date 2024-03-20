@@ -7,7 +7,6 @@ from deepgram import (
     DeepgramClientOptions,
     LiveTranscriptionEvents,
     LiveOptions,
-    Microphone,
 )
 from deepgram.clients.live.v1 import LiveClient
 from dotenv import load_dotenv
@@ -16,13 +15,13 @@ from flask_socketio import SocketIO
 
 load_dotenv()
 
-app = Flask(__name__)
+app_socketio = Flask("app_socketio")
 # TODO: change this to the frontend URL
-socketio = SocketIO(app, cors_allowed_origins=['http://127.0.0.1:8000', 'http://localhost:8000'])
+socketio = SocketIO(app_socketio, cors_allowed_origins=['http://127.0.0.1:8000'])
 
 # Set up client configuration
 config = DeepgramClientOptions(
-    verbose=logging.DEBUG,
+    verbose=logging.WARN,  # Change to logging.INFO or logging.DEBUG for more verbose output
     options={"keepalive": "true"}
 )
 
@@ -58,21 +57,12 @@ def configure_deepgram(dg_connection: LiveClient):
     set_dg_connection(dg_connection)
 
 
-def start_microphone(dg_connection: LiveClient):
-    microphone = Microphone(dg_connection.send)
-    microphone.start()
-    return microphone
-
-
 def start_transcription_loop():
     try:
         global transcribing
         while transcribing:
             dg_connection = deepgram.listen.live.v("1")
             configure_deepgram(dg_connection)
-
-            # Open a microphone stream
-            microphone = start_microphone(dg_connection)
 
             def on_message(self, result, **kwargs):
                 transcript = result.channel.alternatives[0].transcript
@@ -86,28 +76,11 @@ def start_transcription_loop():
             transcription_event.clear()
 
             # Finish the microphone and Deepgram connection
-            microphone.finish()
             dg_connection.finish()
             logging.info("Transcription loop finished.")
 
     except Exception as e:
         logging.error(f"Error: {e}")
-
-
-def reconnect():
-    try:
-        logging.info("Reconnecting to Deepgram...")
-        new_dg_connection = deepgram.listen.live.v("1")
-
-        # Configure and start the new Deepgram connection
-        configure_deepgram(new_dg_connection)
-
-        logging.info("Reconnected to Deepgram successfully.")
-        return new_dg_connection
-
-    except Exception as e:
-        logging.error(f"Reconnection failed: {e}")
-        return None
 
 
 def on_disconnect():
@@ -141,8 +114,15 @@ def toggle_transcription(data):
         transcription_event.set()
 
 
+# WebSocket route to receive audio data from the client
+@socketio.on('audio_stream')
+def audio_stream(message):
+    dg_connection = get_dg_connection()
+    if message and dg_connection:
+        get_dg_connection().send(message)
+
+
 if __name__ == '__main__':
     logging.info("Starting SocketIO server.")
-    # For some reason we need to change the port sometimes
-    # TODO make it back to 5000 (here and in js)
-    socketio.run(app, debug=True, allow_unsafe_werkzeug=True, port=5005)
+    # For some reason it does not work with port 5000
+    socketio.run(app_socketio, debug=True, allow_unsafe_werkzeug=True, port=5001)

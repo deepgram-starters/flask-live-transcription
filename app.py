@@ -5,7 +5,7 @@ from flask import Flask, render_template
 
 load_dotenv()
 
-app = Flask(__name__)
+app = Flask("app_http")
 
 
 @app.route('/')
