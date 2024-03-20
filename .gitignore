@@ -1,5 +1,6 @@
 __pycache__/
 .python-version
+.env
 
 # Jetbrains IDE
 .idea/
