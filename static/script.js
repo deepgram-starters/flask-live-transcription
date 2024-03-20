@@ -1,5 +1,6 @@
+var port = 5005;
 var socket = io.connect(
-  "http://" + window.location.hostname + ":" + location.port
+  "http://" + window.location.hostname + ":" + port.toString()
 );
 
 var isTranscribing = false;
