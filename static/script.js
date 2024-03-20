@@ -22,7 +22,7 @@ socket.on("transcription_update", function (data) {
 
 
 let mediaStream = null;
-let mediaRecorder = null;
+let audioProcessor = null;
 
 function startStreaming() {
   const constraints = {
@@ -31,6 +31,7 @@ function startStreaming() {
 
   navigator.mediaDevices.getUserMedia(constraints)
     .then(function (stream) {
+      mediaStream = stream;
       const audioContext = new (window.AudioContext || window.webkitAudioContext)({
         sampleRate: 16000,
       });
@@ -39,11 +40,11 @@ function startStreaming() {
       const source = audioContext.createMediaStreamSource(stream);
 
       // Use the ScriptProcessorNode for direct audio processing
-      const processor = audioContext.createScriptProcessor(4096, 1, 1);
-      source.connect(processor);
-      processor.connect(audioContext.destination);
+      audioProcessor = audioContext.createScriptProcessor(4096, 1, 1);
+      source.connect(audioProcessor);
+      audioProcessor.connect(audioContext.destination);
 
-      processor.onaudioprocess = function (audioProcessingEvent) {
+      audioProcessor.onaudioprocess = function (audioProcessingEvent) {
         const inputBuffer = audioProcessingEvent.inputBuffer;
         const outputBuffer = audioProcessingEvent.outputBuffer;
 
@@ -70,10 +71,10 @@ function startStreaming() {
 }
 
 function stopStreaming() {
-  if (mediaRecorder) {
-    mediaRecorder.stop();
+  if (audioProcessor) {
+    audioProcessor.disconnect();
     mediaStream.getTracks().forEach(track => track.stop());
     mediaStream = null;
-    mediaRecorder = null;
+    audioProcessor = null;
   }
 }
