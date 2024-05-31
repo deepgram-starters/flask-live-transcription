@@ -1,17 +1,17 @@
 [meta]
-  title = "<usecase> <language/framework> Starter" # update with usecase and framework
-  description = "Basic demo for using Deepgram to <do a thing> in <language/framework>" # update with usecase and framework
-  author = "Deepgram DX Team <devrel@deepgram.com> (https://developers.deepgram.com)" # update for author details
-  useCase = "Prerecorded" # usecase
-  language = "Python" # base language
-  framework = "Flask" # framework if not native
+  title = "Live Flask Starter"
+  description = "Basic demo for using Deepgram to transcribe microphone audio in Flask"
+  author = "Deepgram DX Team <devrel@deepgram.com> (https://developers.deepgram.com)"
+  useCase = "Live"
+  language = "Python"
+  framework = "Flask"
 
-[build] # delete if no build/install steps applicable 
-  command = "pip install -r requirements.txt" # automatically install dependencies, delete if not applicable
+[build]
+  command = "pip install -r requirements.txt"
 
 [config]
-  sample = "sample.env" # the example config file
-  output = ".env" # the file that we will generate using their API
+  sample = "sample.env"
+  output = ".env"
 
 [post-build]
-  message = "Run `flask run -p 8080` to get up and running." # message to give users once setup is complete
+  message = "Run `python app.py` to get up and running." # message to give users once setup is complete
