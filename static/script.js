@@ -1,80 +1,75 @@
-var socket_port = 5001;
-var socket = io.connect(
+let isRecording = false;
+let socket;
+let microphone;
+
+const socket_port = 5001;
+socket = io(
   "http://" + window.location.hostname + ":" + socket_port.toString()
 );
 
-document.getElementById("record").addEventListener("change", function () {
-  if (this.checked) {
-    // Start transcription
-    socket.emit("toggle_transcription", {action: "start"});
-    startStreaming();
-  } else {
-    // Stop transcription
-    stopStreaming();
-    socket.emit("toggle_transcription", {action: "stop"});
-  }
-});
-
-// Write transcription updates to the page
-socket.on("transcription_update", function (data) {
+socket.on("transcription_update", (data) => {
   document.getElementById("captions").innerHTML = data.transcription;
 });
 
-
-let mediaStream = null;
-let audioProcessor = null;
-
-function startStreaming() {
-  const constraints = {
-    audio: true,
-  };
-
-  navigator.mediaDevices.getUserMedia(constraints)
-    .then(function (stream) {
-      mediaStream = stream;
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)({
-        sampleRate: 16000,
-      });
-
-      // Create a MediaStreamAudioSourceNode from the stream
-      const source = audioContext.createMediaStreamSource(stream);
-
-      // Use the ScriptProcessorNode for direct audio processing
-      audioProcessor = audioContext.createScriptProcessor(4096, 1, 1);
-      source.connect(audioProcessor);
-      audioProcessor.connect(audioContext.destination);
-
-      audioProcessor.onaudioprocess = function (audioProcessingEvent) {
-        const inputBuffer = audioProcessingEvent.inputBuffer;
-        const outputBuffer = audioProcessingEvent.outputBuffer;
-
-        for (let channel = 0; channel < outputBuffer.numberOfChannels; channel++) {
-          const inputData = inputBuffer.getChannelData(channel);
-          const outputData = new Int16Array(inputData.length);
-
-          // Convert to 16-bit PCM
-          for (let sample = 0; sample < inputData.length; sample++) {
-            // Multiply by 0x7FFF; convert to 16-bit PCM
-            outputData[sample] = Math.max(-1, Math.min(1, inputData[sample])) * 0x7FFF;
-          }
-
-          // At this point, outputData contains the 16-bit PCM audio
-          // Here, you would typically send the data over a WebSocket or another method
-          const blob = new Blob([outputData.buffer], {type: 'audio/wav'});
-          socket.emit('audio_stream', blob);
-        }
-      };
-    })
-    .catch(function (err) {
-      console.error('Error accessing microphone:', err);
-    });
-}
-
-function stopStreaming() {
-  if (audioProcessor) {
-    audioProcessor.disconnect();
-    mediaStream.getTracks().forEach(track => track.stop());
-    mediaStream = null;
-    audioProcessor = null;
+async function getMicrophone() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    return new MediaRecorder(stream, { mimeType: "audio/webm" });
+  } catch (error) {
+    console.error("Error accessing microphone:", error);
+    throw error;
   }
 }
+
+async function openMicrophone(microphone, socket) {
+  return new Promise((resolve) => {
+    microphone.onstart = () => {
+      console.log("Client: Microphone opened");
+      document.body.classList.add("recording");
+      resolve();
+    };
+    microphone.ondataavailable = async (event) => {
+      console.log("client: microphone data received");
+      if (event.data.size > 0) {
+        socket.emit("audio_stream", event.data);
+      }
+    };
+    microphone.start(1000);
+  });
+}
+
+async function startRecording() {
+  isRecording = true;
+  microphone = await getMicrophone();
+  console.log("Client: Waiting to open microphone");
+  await openMicrophone(microphone, socket);
+}
+
+async function stopRecording() {
+  if (isRecording === true) {
+    microphone.stop();
+    microphone.stream.getTracks().forEach((track) => track.stop()); // Stop all tracks
+    socket.emit("toggle_transcription", { action: "stop" });
+    microphone = null;
+    isRecording = false;
+    console.log("Client: Microphone closed");
+    document.body.classList.remove("recording");
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const recordButton = document.getElementById("record");
+
+  recordButton.addEventListener("click", () => {
+    if (!isRecording) {
+      socket.emit("toggle_transcription", { action: "start" });
+      startRecording().catch((error) =>
+        console.error("Error starting recording:", error)
+      );
+    } else {
+      stopRecording().catch((error) =>
+        console.error("Error stopping recording:", error)
+      );
+    }
+  });
+});
