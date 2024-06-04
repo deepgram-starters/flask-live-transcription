@@ -23,45 +23,63 @@ config = DeepgramClientOptions(
     options={"keepalive": "true"}
 )
 
-# # Initialize Deepgram client and connection
 deepgram = DeepgramClient(API_KEY, config)
-dg_connection = deepgram.listen.live.v("1")
 
-def on_open(self, open, **kwargs):
-    print(f"\n\n{open}\n\n")
+dg_connection = None
 
-def on_message(self, result, **kwargs):
-    transcript = result.channel.alternatives[0].transcript
-    if len(transcript) > 0:
-        print(result.channel.alternatives[0].transcript)
-        socketio.emit('transcription_update', {'transcription': transcript})
+def initialize_deepgram_connection():
+    global dg_connection
+    # Initialize Deepgram client and connection
+    dg_connection = deepgram.listen.live.v("1")
 
-def on_close(self, close, **kwargs):
-    print(f"\n\n{close}\n\n")
+    def on_open(self, open, **kwargs):
+        print(f"\n\n{open}\n\n")
 
-def on_error(self, error, **kwargs):
-    print(f"\n\n{error}\n\n")
+    def on_message(self, result, **kwargs):
+        transcript = result.channel.alternatives[0].transcript
+        if len(transcript) > 0:
+            print(result.channel.alternatives[0].transcript)
+            socketio.emit('transcription_update', {'transcription': transcript})
 
-dg_connection.on(LiveTranscriptionEvents.Open, on_open)
-dg_connection.on(LiveTranscriptionEvents.Transcript, on_message)
-dg_connection.on(LiveTranscriptionEvents.Close, on_close)
-dg_connection.on(LiveTranscriptionEvents.Error, on_error)
+    def on_close(self, close, **kwargs):
+        print(f"\n\n{close}\n\n")
 
-# Define the options for the live transcription
-options = LiveOptions(model="nova-2", language="en-US")
+    def on_error(self, error, **kwargs):
+        print(f"\n\n{error}\n\n")
 
-if dg_connection.start(options) is False:
-    print("Failed to start connection")
-    exit()
+    dg_connection.on(LiveTranscriptionEvents.Open, on_open)
+    dg_connection.on(LiveTranscriptionEvents.Transcript, on_message)
+    dg_connection.on(LiveTranscriptionEvents.Close, on_close)
+    dg_connection.on(LiveTranscriptionEvents.Error, on_error)
+
+    # Define the options for the live transcription
+    options = LiveOptions(model="nova-2", language="en-US")
+
+    if dg_connection.start(options) is False: # THIS CAUSES ERROR
+        print("Failed to start connection")
+        exit()
 
 @socketio.on('audio_stream')
 def handle_audio_stream(data):
-    print("audio data received")
-    dg_connection.send(data)
+    if dg_connection:
+        dg_connection.send(data)
+
+@socketio.on('toggle_transcription')
+def handle_toggle_transcription(data):
+    print("toggle_transcription", data)
+    action = data.get("action")
+    if action == "start":
+        print("Starting Deepgram connection")
+        initialize_deepgram_connection()
 
 @socketio.on('connect')
 def server_connect():
     print('Client connected')
+
+@socketio.on('restart_deepgram')
+def restart_deepgram():
+    print('Restarting Deepgram connection')
+    initialize_deepgram_connection()
 
 if __name__ == '__main__':
     logging.info("Starting SocketIO server.")
