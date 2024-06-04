@@ -40,10 +40,11 @@ DEEPGRAM_API_KEY=%api_key%
 
 #### Run the application
 
-Once running, you can access the application in your browser at <http://127.0.0.1:5000>
+You need to run both app.py (port 8000) and app_socketio.py (port 5001). Once running, you can access the application in your browser at <http://127.0.0.1:8000>
 
 ```bash
 python app.py
+python app_socketio.py
 ```
 
 
