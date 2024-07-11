@@ -41,6 +41,9 @@ jobs:
           if [ "$LATEST_VERSION" != "$INSTALLED_VERSION" ]; then
             echo "Updating Deepgram SDK from $INSTALLED_VERSION to $LATEST_VERSION"
             pip install deepgram-sdk==$LATEST_VERSION
+            
+            # Update requirements.txt
+            sed -i "s/deepgram-sdk==.*/deepgram-sdk==$LATEST_VERSION/" requirements.txt
             git config --global user.name 'github-actions[bot]'
             git config --global user.email 'github-actions[bot]@users.noreply.github.com'
             git add requirements.txt
