@@ -47,7 +47,19 @@ python app.py
 python app_socketio.py
 ```
 
+## Testing
 
+To contribute or modify pytest code, install the following dependencies:
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+To run the tests, run the following command:
+
+```bash
+pytest -v -s
+```
 
 ## Issue Reporting
 
