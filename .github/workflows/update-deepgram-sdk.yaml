@@ -51,8 +51,14 @@ jobs:
             git checkout -b update-deepgram-sdk
             git add requirements.txt
 
+            # Stash changes
+            git stash
+            
             # Pull latest changes from remote
             git pull origin update-deepgram-sdk --rebase
+            
+            # Apply stashed changes
+            git stash pop
             
             # Check if there are changes to commit
             if git diff-index --quiet HEAD --; then
