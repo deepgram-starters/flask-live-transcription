@@ -48,14 +48,14 @@ jobs:
             git config --global user.email 'github-actions[bot]@users.noreply.github.com'
             
             # Create a new branch for the update
-            git checkout -b update-deepgram-sdk
+            git checkout -b update-dg-sdk
             git add requirements.txt
 
             # Stash changes
             git stash
             
             # Pull latest changes from remote
-            git pull origin update-deepgram-sdk --rebase
+            git pull origin update-dg-sdk --rebase
             
             # Apply stashed changes
             git stash pop
@@ -65,10 +65,10 @@ jobs:
               echo "No changes to commit"
             else
               git commit -m "chore: update Deepgram SDK to $LATEST_VERSION"
-              git push -u origin update-deepgram-sdk
+              git push -u origin update-dg-sdk
               
               # Create a pull request
-              gh pr create --title "Update Deepgram SDK to $LATEST_VERSION" --body "Automated update of Deepgram SDK to version $LATEST_VERSION" --head update-deepgram-sdk
+              gh pr create --title "Update Deepgram SDK to $LATEST_VERSION" --body "Automated update of Deepgram SDK to version $LATEST_VERSION" --head update-dg-sdk
             fi
           else
             echo "Deepgram SDK is up to date"
