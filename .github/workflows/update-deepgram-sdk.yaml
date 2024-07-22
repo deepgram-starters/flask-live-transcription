@@ -50,6 +50,9 @@ jobs:
             # Create a new branch for the update
             git checkout -b update-deepgram-sdk
             git add requirements.txt
+
+            # Pull latest changes from remote
+            git pull origin update-deepgram-sdk --rebase
             
             # Check if there are changes to commit
             if git diff-index --quiet HEAD --; then
