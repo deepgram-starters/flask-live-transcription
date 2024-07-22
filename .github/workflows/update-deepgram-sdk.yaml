@@ -59,11 +59,13 @@ jobs:
               git push -u origin update-deepgram-sdk
               
               # Create a pull request
-              gh pr create --title "Update Deepgram SDK to $LATEST_VERSION" --body "Automated update of Deepgram SDK to version $LATEST_VERSION"
+              gh pr create --title "Update Deepgram SDK to $LATEST_VERSION" --body "Automated update of Deepgram SDK to version $LATEST_VERSION" --head update-deepgram-sdk
             fi
           else
             echo "Deepgram SDK is up to date"
           fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install dependencies
         run: pip install -r requirements.txt
