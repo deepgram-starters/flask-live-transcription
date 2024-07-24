@@ -40,7 +40,7 @@ jobs:
         run: |
           git config --global init.defaultBranch main
           git config --global pull.rebase true
-          git config --global url."https://git:$GITHUB_TOKEN@github.com".insteadOf "https://github.com"
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
 
       - name: Compare versions and update if necessary
         env:
