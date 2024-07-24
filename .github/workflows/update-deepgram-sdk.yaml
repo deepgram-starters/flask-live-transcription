@@ -60,12 +60,11 @@ jobs:
             git add requirements.txt
             
             # Create a new branch and commit changes
-            BRANCH_NAME="update-deepgram-sdk-$LATEST_VERSION"
+            BRANCH_NAME="update-dg-sdk-$LATEST_VERSION"
             git checkout -b "$BRANCH_NAME"
             git commit -m "chore: update Deepgram SDK to $LATEST_VERSION"
             
             # Push the new branch and create a PR
-            git pull origin "$BRANCH_NAME" --rebase
             git push origin "$BRANCH_NAME"
             gh pr create --title "chore: update Deepgram SDK to $LATEST_VERSION" --body "This PR updates the Deepgram SDK to version $LATEST_VERSION." --base "main" --head "$BRANCH_NAME"
           else
