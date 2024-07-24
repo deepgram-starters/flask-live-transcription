@@ -46,7 +46,7 @@ jobs:
 
       - name: Compare versions and update if necessary
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_RELEASE_ACCESS_TOKEN }}
         run: |
           LATEST_VERSION=${{ env.version }}
           INSTALLED_VERSION=${{ env.installed_version }}
@@ -60,7 +60,7 @@ jobs:
             git add requirements.txt
             
             # Create a new branch and commit changes
-            BRANCH_NAME="update-dg-sdk-$LATEST_VERSION"
+            BRANCH_NAME="sr/update-deepgram-sdk-$LATEST_VERSION"
             git checkout -b "$BRANCH_NAME"
             git commit -m "chore: update Deepgram SDK to $LATEST_VERSION"
             
