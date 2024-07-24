@@ -33,6 +33,15 @@ jobs:
           INSTALLED_VERSION=$(pip show deepgram-sdk | grep Version | cut -d' ' -f2)
           echo "installed_version=$INSTALLED_VERSION" >> $GITHUB_ENV
 
+      - name: Config git
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_RELEASE_ACCESS_TOKEN }}
+        shell: bash
+        run: |
+          git config --global init.defaultBranch main
+          git config --global pull.rebase true
+          git config --global url."https://git:$GITHUB_TOKEN@github.com".insteadOf "https://github.com"
+
       - name: Compare versions and update if necessary
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -47,12 +56,6 @@ jobs:
             # Update requirements.txt
             sed -i "s/deepgram-sdk==.*/deepgram-sdk==$LATEST_VERSION/" requirements.txt
             git add requirements.txt
-            
-            # Config git
-            git config --global init.defaultBranch main
-            git config --global pull.rebase true
-            git config --global user.name 'github-actions[bot]'
-            git config --global user.email 'github-actions[bot]@users.noreply.github.com'
             
             # Create a new branch and commit changes
             BRANCH_NAME="update-deepgram-sdk-$LATEST_VERSION"
