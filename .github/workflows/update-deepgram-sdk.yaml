@@ -34,6 +34,8 @@ jobs:
           echo "installed_version=$INSTALLED_VERSION" >> $GITHUB_ENV
 
       - name: Compare versions and update if necessary
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           LATEST_VERSION=${{ env.version }}
           INSTALLED_VERSION=${{ env.installed_version }}
@@ -44,17 +46,22 @@ jobs:
             
             # Update requirements.txt
             sed -i "s/deepgram-sdk==.*/deepgram-sdk==$LATEST_VERSION/" requirements.txt
-            git config --global user.name 'github-actions[bot]'
-            git config --global user.email 'github-actions[bot]@users.noreply.github.com'
             git add requirements.txt
             
-            # Check if there are changes to commit
-            if git diff-index --quiet HEAD --; then
-              echo "No changes to commit"
-            else
-              git commit -m "chore: update Deepgram SDK to $LATEST_VERSION"
-              git push
-            fi
+            # Config git
+            git config --global init.defaultBranch main
+            git config --global pull.rebase true
+            git config --global user.name 'github-actions[bot]'
+            git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+            
+            # Create a new branch and commit changes
+            BRANCH_NAME="update-deepgram-sdk-$LATEST_VERSION"
+            git checkout -b "$BRANCH_NAME"
+            git commit -m "chore: update Deepgram SDK to $LATEST_VERSION"
+            
+            # Push the new branch and create a PR
+            git push origin "$BRANCH_NAME"
+            gh pr create --title "chore: update Deepgram SDK to $LATEST_VERSION" --body "This PR updates the Deepgram SDK to version $LATEST_VERSION." --base "main" --head "$BRANCH_NAME"
           else
             echo "Deepgram SDK is up to date"
           fi
@@ -66,7 +73,6 @@ jobs:
         run: pip install -r requirements-dev.txt
 
       - name: Run tests
-        id: run-tests
         env:
           DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
         run: pytest tests/
