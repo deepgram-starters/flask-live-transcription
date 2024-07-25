@@ -47,6 +47,19 @@ python app.py
 python app_socketio.py
 ```
 
+#### SSL Error
+
+If the SocketIO app raises an `WebSocketException` with CERTIFICATE_VERIFY_FAILED, you can add these lines in order to use the `certifi` trust files.
+```python
+# file:app_socketio.py
+import os
+# Add this import
+import certifi
+
+# Add this line anywhere before `dg_connection.start`
+os.environ["SSL_CERT_FILE"] = certifi.where()
+```
+
 ## Testing
 
 To contribute or modify pytest code, install the following dependencies:
