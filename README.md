@@ -1,4 +1,4 @@
-# Live Transcription Flask Starter
+# Flask Live Transcription Starter
 
  [![Discord](https://dcbadge.vercel.app/api/server/xWRaCDBtW4?style=flat)](https://discord.gg/xWRaCDBtW4)
 
