@@ -1,6 +1,6 @@
 [meta]
   title = "Flask Live Transcription Starter"
-  description = "Basic demo for using Deepgram to transcribe live audio in Flask"
+  description = "Starter repository for Deepgram Live Transcription in Flask"
   author = "Deepgram DX Team <devrel@deepgram.com> (https://developers.deepgram.com)"
   useCase = "Live"
   language = "Python"
