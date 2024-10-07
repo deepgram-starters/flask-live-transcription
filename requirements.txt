@@ -1,4 +1,4 @@
-deepgram-sdk==v3.7.2
+deepgram-sdk==v3.7.3
 Flask==3.0.0
 Flask-SocketIO==5.3.6
 python-dotenv==1.0.0
