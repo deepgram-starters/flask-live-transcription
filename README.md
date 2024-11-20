@@ -1,8 +1,6 @@
 # Flask Live Transcription Starter
 
- [![Discord](https://dcbadge.vercel.app/api/server/xWRaCDBtW4?style=flat)](https://discord.gg/xWRaCDBtW4)
-
-This sample demonstrates interacting with the Deepgram live streaming API using Flask, a micro web framework for Python.
+Get started using Deepgram's Live Transcription with this Flask demo app.
 
 ## What is Deepgram?
 
