@@ -53,7 +53,7 @@ def initialize_deepgram_connection():
     dg_connection.on(LiveTranscriptionEvents.Error, on_error)
 
     # Define the options for the live transcription
-    options = LiveOptions(model="nova-2", language="en-US")
+    options = LiveOptions(model="nova-3", language="en-US")
 
     if dg_connection.start(options) is False: # THIS CAUSES ERROR
         print("Failed to start connection")
