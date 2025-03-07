@@ -4,7 +4,7 @@ Get started using Deepgram's Live Transcription with this Flask demo app.
 
 ## What is Deepgram?
 
-[Deepgram](https://deepgram.com/) is a foundational AI company providing speech-to-text and language understanding capabilities to make data readable and actionable by human or machines.
+[Deepgram’s](https://deepgram.com/) voice AI platform provides APIs for speech-to-text, text-to-speech, and full speech-to-speech voice agents. Over 200,000+ developers use Deepgram to build voice AI products and features.
 
 ## Sign-up to Deepgram
 
