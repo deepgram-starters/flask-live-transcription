@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Live speech-to-text transcription from audio stream URLs using Deepgram"
+    />
+    <title>Deepgram Live STT - Stream Transcription</title>
+
+    <!-- Font Awesome for icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+      integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+
+    <!-- Deepgram Design System Styles -->
+    <link
+      rel="stylesheet"
+      href="./node_modules/@deepgram/styles/dist/deepgram.css"
+    />
+
+    <!-- Application JavaScript -->
+    <script type="module" src="/main.js"></script>
+
+    <style>
+      body {
+        background: var(--dg-charcoal, #1a1a1f);
+        min-height: 100vh;
+      }
+
+      .main-container {
+        max-width: 80rem;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+      }
+
+      @media (max-width: 768px) {
+        .main-container {
+          padding: 1rem;
+        }
+      }
+
+      /* Transcript display area */
+      .transcript-display {
+        min-height: 20rem;
+        max-height: 40rem;
+        overflow-y: auto;
+        padding: 1.5rem;
+        background: var(--dg-background, #0b0b0c);
+        border: 1px solid var(--dg-pebble, #4e4e52);
+        border-radius: 0.5rem;
+        font-family: "Courier New", monospace;
+        font-size: 1rem;
+        line-height: 1.6;
+        color: var(--dg-fog, #edede2);
+      }
+
+      .transcript-item {
+        margin-bottom: 0.75rem;
+        padding: 0.75rem;
+        background: rgba(19, 239, 149, 0.05);
+        border-left: 3px solid var(--dg-primary, #13ef95);
+        border-radius: 0.25rem;
+        animation: fadeIn 0.3s ease-in;
+      }
+
+      .transcript-item--interim {
+        opacity: 0.6;
+        border-left-color: var(--dg-muted, #949498);
+        background: rgba(148, 148, 152, 0.05);
+      }
+
+      .transcript-meta {
+        font-size: 0.75rem;
+        color: var(--dg-muted, #949498);
+        margin-bottom: 0.25rem;
+      }
+
+      .transcript-text {
+        color: var(--dg-fog, #edede2);
+      }
+
+      .transcript-placeholder {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--dg-muted, #949498);
+        font-style: italic;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Form inputs */
+      .dg-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background: var(--dg-background, #0b0b0c);
+        border: 2px solid var(--dg-pebble, #4e4e52);
+        border-radius: 0.5rem;
+        color: var(--dg-fog, #edede2);
+        font-family: "Courier New", monospace;
+        font-size: 0.875rem;
+        transition: border-color 0.2s;
+      }
+
+      .dg-input:focus {
+        outline: none;
+        border-color: var(--dg-primary, #13ef95);
+      }
+
+      .dg-input::placeholder {
+        color: var(--dg-muted, #949498);
+      }
+
+      .dg-select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background: var(--dg-background, #0b0b0c);
+        border: 2px solid var(--dg-pebble, #4e4e52);
+        border-radius: 0.5rem;
+        color: var(--dg-fog, #edede2);
+        font-family: "Courier New", monospace;
+        font-size: 0.875rem;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Header -->
+    <header
+      class="dg-section dg-section--compact"
+      style="border-bottom: 1px solid rgba(255, 255, 255, 0.1)"
+    >
+      <div class="dg-constrain-width">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          "
+        >
+          <div>
+            <h1 class="dg-section-heading" style="margin-bottom: 0">
+              <i class="fa-solid fa-tower-broadcast dg-text-primary"></i>
+              Deepgram Live STT
+            </h1>
+          </div>
+          <div>
+            <a
+              href="https://developers.deepgram.com/docs/live-streaming-audio"
+              class="dg-btn dg-btn--ghost dg-btn--sm"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <i class="fa-solid fa-book"></i> Docs
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-container">
+      <!-- Configuration Section -->
+      <section
+        class="dg-section dg-section--bordered"
+        style="margin-bottom: 2rem"
+      >
+        <h2 class="dg-section-heading">Stream Configuration</h2>
+
+        <!-- Stream URL Input -->
+        <div class="dg-form-field dg-form-field--full">
+          <label class="dg-form-label">
+            <i class="fa-solid fa-link"></i> Live Audio Stream URL
+          </label>
+          <input
+            type="text"
+            id="stream-url-input"
+            class="dg-input"
+            placeholder="http://stream.live.vc.bbcmedia.co.uk/bbc_world_service"
+            value="http://stream.live.vc.bbcmedia.co.uk/bbc_world_service"
+          />
+          <p
+            style="
+              font-size: 0.75rem;
+              color: var(--dg-muted, #949498);
+              margin-top: 0.5rem;
+            "
+          >
+            Enter an HTTP/HTTPS URL of a live audio stream (e.g., radio stream,
+            podcast stream)
+          </p>
+        </div>
+
+        <!-- Transcription Options -->
+        <div
+          style="
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+          "
+        >
+          <div class="dg-form-field">
+            <label class="dg-form-label">Model</label>
+            <select id="model-input" class="dg-select">
+              <option value="nova-3">Nova 3</option>
+              <!-- Add more models here:
+              <option value="nova-2">Nova 2</option>
+              <option value="nova">Nova</option>
+              <option value="enhanced">Enhanced</option>
+              <option value="base">Base</option>
+              -->
+            </select>
+          </div>
+
+          <div class="dg-form-field">
+            <label class="dg-form-label">Language</label>
+            <input
+              type="text"
+              id="language-input"
+              class="dg-input"
+              value="en"
+              placeholder="en"
+            />
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="dg-action-group" style="margin-top: 1.5rem">
+          <button id="start-button" class="dg-btn dg-btn--primary">
+            <i class="fa-solid fa-play"></i> Start Transcription
+          </button>
+          <button id="stop-button" class="dg-btn dg-btn--danger-ghost" hidden>
+            <i class="fa-solid fa-stop"></i> Stop Transcription
+          </button>
+          <button id="cancel-button" class="dg-btn dg-btn--secondary" hidden>
+            <i class="fa-solid fa-xmark"></i> Cancel
+          </button>
+        </div>
+
+        <!-- Status Indicator -->
+        <div
+          id="status-indicator"
+          class="dg-status dg-status--info"
+          style="margin-top: 1rem; display: none"
+        >
+          <i class="fa-solid fa-circle dg-status__icon"></i>
+          <span id="status-text">Ready</span>
+        </div>
+      </section>
+
+      <!-- Transcription Display Section -->
+      <section class="dg-section dg-section--bordered">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+          "
+        >
+          <h2 class="dg-section-heading" style="margin-bottom: 0">
+            <i class="fa-solid fa-comments"></i> Live Transcript
+          </h2>
+          <button id="clear-transcript" class="dg-btn dg-btn--ghost dg-btn--sm">
+            <i class="fa-solid fa-trash"></i> Clear
+          </button>
+        </div>
+
+        <div id="transcript-container" class="transcript-display">
+          <div class="transcript-placeholder">
+            <i
+              class="fa-solid fa-tower-broadcast"
+              style="font-size: 3rem; opacity: 0.3; margin-bottom: 1rem"
+            ></i>
+            <p>
+              Enter an audio stream URL and click "Start Transcription" to
+              begin...
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="dg-footer">
+      <p>
+        Powered by
+        <a href="https://deepgram.com" class="dg-link" target="_blank"
+          >Deepgram</a
+        >
+      </p>
+    </footer>
+  </body>
+</html>
