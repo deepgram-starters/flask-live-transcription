@@ -18,11 +18,12 @@ import threading
 from flask import Flask, request
 from flask_sock import Sock
 from flask_cors import CORS
-from deepgram import (
-    DeepgramClient,
-    DeepgramClientOptions,
-    LiveTranscriptionEvents,
-    LiveOptions
+from deepgram import DeepgramClient
+from deepgram.core.events import EventType
+from deepgram.extensions.types.sockets import (
+    ListenV1SocketClientResponse,
+    ListenV1MediaMessage,
+    ListenV1ControlMessage
 )
 from dotenv import load_dotenv
 
@@ -115,170 +116,159 @@ def live_transcription(ws):
     model = request.args.get('model', DEFAULT_MODEL)
     language = request.args.get('language', DEFAULT_LANGUAGE)
 
-    # Initialize Deepgram connection
+    # Initialize Deepgram client
+    client = DeepgramClient(api_key=API_KEY)
+
+    # Thread control
+    stop_event = threading.Event()
     deepgram_connection = None
-    keep_alive_thread = None
-    stop_keepalive = threading.Event()
+    deepgram_context = None
 
     try:
-        # Create Deepgram client with timeout configuration
-        config = DeepgramClientOptions(
-            options={"keepalive": "true"}
-        )
-        deepgram = DeepgramClient(API_KEY, config)
-
-        # Configure live transcription options
-        options = LiveOptions(
+        # Create Deepgram live connection (returns a context manager)
+        deepgram_context = client.listen.v1.connect(
             model=model,
             language=language,
-            smart_format=True,
-        )
+            smart_format=True
 
-        # Create live connection
-        deepgram_connection = deepgram.listen.live.v("1")
+        )
+        # Enter the context manager to get the actual connection object
+        deepgram_connection = deepgram_context.__enter__()
 
         # Set up Deepgram event handlers
-        def on_open(self, open_event, **kwargs):
+        def on_open(open_event):
             """Handle Deepgram connection open"""
             print(f"Deepgram connection opened - model: {model}, language: {language}")
 
-        def on_message(self, result, **kwargs):
+        def on_message(result: ListenV1SocketClientResponse):
             """Handle transcript results from Deepgram"""
             try:
-                # Extract transcript from Deepgram response
-                sentence = result.channel.alternatives[0].transcript
+                # Check if this is a transcript response
+                if hasattr(result, 'channel'):
+                    sentence = result.channel.alternatives[0].transcript
 
-                if len(sentence) > 0:
-                    # Format response according to live-stt contract
-                    response = {
-                        'type': 'Results',
-                        'transcript': sentence,
-                        'is_final': result.is_final if hasattr(result, 'is_final') else False,
-                        'speech_final': result.speech_final if hasattr(result, 'speech_final') else False,
+                    if len(sentence) > 0:
+                        # Format response according to live-stt contract
+                        response = {
+                            'type': 'Results',
+                            'transcript': sentence,
+                            'is_final': result.is_final if hasattr(result, 'is_final') else False,
+                            'speech_final': result.speech_final if hasattr(result, 'speech_final') else False,
+                        }
+
+                        # Add optional fields if available
+                        if hasattr(result.channel.alternatives[0], 'confidence'):
+                            response['confidence'] = result.channel.alternatives[0].confidence
+
+                        if hasattr(result.channel.alternatives[0], 'words') and result.channel.alternatives[0].words:
+                            response['words'] = [
+                                {
+                                    'word': word.word,
+                                    'start': word.start,
+                                    'end': word.end,
+                                    'confidence': word.confidence if hasattr(word, 'confidence') else None
+                                }
+                                for word in result.channel.alternatives[0].words
+                            ]
+
+                        if hasattr(result, 'duration'):
+                            response['duration'] = result.duration
+
+                        if hasattr(result, 'start'):
+                            response['start'] = result.start
+
+                        response['metadata'] = {
+                            'model': model,
+                            'language': language
+                        }
+
+                        # Send to client
+                        ws.send(json.dumps(response))
+
+                # Check if this is metadata
+                elif hasattr(result, 'request_id'):
+                    metadata_response = {
+                        'type': 'Metadata',
+                        'request_id': result.request_id if hasattr(result, 'request_id') else None,
+                        'model_info': {
+                            'name': result.model_info.name if hasattr(result, 'model_info') else model,
+                            'version': result.model_info.version if hasattr(result, 'model_info') and hasattr(result.model_info, 'version') else None
+                        } if hasattr(result, 'model_info') else {'name': model},
+                        'created': result.created if hasattr(result, 'created') else None
                     }
-
-                    # Add optional fields if available
-                    if hasattr(result.channel.alternatives[0], 'confidence'):
-                        response['confidence'] = result.channel.alternatives[0].confidence
-
-                    if hasattr(result.channel.alternatives[0], 'words') and result.channel.alternatives[0].words:
-                        response['words'] = [
-                            {
-                                'word': word.word,
-                                'start': word.start,
-                                'end': word.end,
-                                'confidence': word.confidence if hasattr(word, 'confidence') else None
-                            }
-                            for word in result.channel.alternatives[0].words
-                        ]
-
-                    if hasattr(result, 'duration'):
-                        response['duration'] = result.duration
-
-                    if hasattr(result, 'start'):
-                        response['start'] = result.start
-
-                    response['metadata'] = {
-                        'model': model,
-                        'language': language
-                    }
-
-                    # Send to client
-                    ws.send(json.dumps(response))
+                    ws.send(json.dumps(metadata_response))
 
             except Exception as e:
                 print(f"Error processing Deepgram message: {e}")
                 error_response = format_error_response('TRANSCRIPTION_FAILED', 'Error processing transcript')
                 ws.send(json.dumps(error_response))
 
-        def on_metadata(self, metadata, **kwargs):
-            """Handle metadata from Deepgram"""
-            try:
-                response = {
-                    'type': 'Metadata',
-                    'request_id': metadata.request_id if hasattr(metadata, 'request_id') else None,
-                    'model_info': {
-                        'name': metadata.model_info.name if hasattr(metadata, 'model_info') else model,
-                        'version': metadata.model_info.version if hasattr(metadata, 'model_info') and hasattr(metadata.model_info, 'version') else None
-                    },
-                    'created': metadata.created if hasattr(metadata, 'created') else None
-                }
-
-                ws.send(json.dumps(response))
-            except Exception as e:
-                print(f"Error processing metadata: {e}")
-
-        def on_error(self, error, **kwargs):
+        def on_error(error):
             """Handle errors from Deepgram"""
             print(f"Deepgram error: {error}")
             error_response = format_error_response('CONNECTION_FAILED', 'Deepgram connection error')
-            ws.send(json.dumps(error_response))
+            try:
+                ws.send(json.dumps(error_response))
+            except Exception as send_err:
+                pass
 
-        def on_close(self, close_event, **kwargs):
+        def on_close(close_event):
             """Handle Deepgram connection close"""
             print("Deepgram connection closed")
-            stop_keepalive.set()
+            stop_event.set()
 
         # Register event handlers
-        deepgram_connection.on(LiveTranscriptionEvents.Open, on_open)
-        deepgram_connection.on(LiveTranscriptionEvents.Transcript, on_message)
-        deepgram_connection.on(LiveTranscriptionEvents.Metadata, on_metadata)
-        deepgram_connection.on(LiveTranscriptionEvents.Error, on_error)
-        deepgram_connection.on(LiveTranscriptionEvents.Close, on_close)
+        deepgram_connection.on(EventType.OPEN, on_open)
+        deepgram_connection.on(EventType.MESSAGE, on_message)
+        deepgram_connection.on(EventType.ERROR, on_error)
+        deepgram_connection.on(EventType.CLOSE, on_close)
 
-        # Start the Deepgram connection
-        if deepgram_connection.start(options) is False:
-            print("Failed to start Deepgram connection")
-            error_response = format_error_response('CONNECTION_FAILED', 'Failed to start Deepgram connection')
-            ws.send(json.dumps(error_response))
-            return
+        # Start listening to Deepgram in a background thread
+        def listen_to_deepgram():
+            try:
+                deepgram_connection.start_listening()
+            except Exception as e:
+                print(f"Error in Deepgram listening thread: {e}")
+                stop_event.set()
 
-        # Start keepalive thread
-        def send_keepalive():
-            while not stop_keepalive.is_set():
-                try:
-                    if deepgram_connection:
-                        deepgram_connection.keep_alive()
-                except Exception as e:
-                    print(f"Keepalive error: {e}")
-                    break
-                stop_keepalive.wait(5)  # Send keepalive every 5 seconds
-
-        keep_alive_thread = threading.Thread(target=send_keepalive, daemon=True)
-        keep_alive_thread.start()
+        deepgram_thread = threading.Thread(target=listen_to_deepgram, daemon=True)
+        deepgram_thread.start()
 
         print("WebSocket connection established, waiting for audio data...")
 
         # Main loop: receive audio from client and forward to Deepgram
-        while True:
-            data = ws.receive()
+        while not stop_event.is_set():
+            data = ws.receive(timeout=1)  # 1 second timeout to check stop_event
 
             if data is None:
-                # Connection closed
-                print("Client disconnected")
-                break
+                # Connection closed or timeout
+                if stop_event.is_set():
+                    break
+                continue
 
             # Forward binary audio to Deepgram
             if isinstance(data, bytes):
-                if deepgram_connection:
-                    deepgram_connection.send(data)
+                try:
+                    deepgram_connection.send_media(ListenV1MediaMessage(data))
+                except Exception as e:
+                    print(f"Error sending audio to Deepgram: {e}")
+                    break
             elif isinstance(data, str):
-                # Handle text messages (could be control messages in the future)
+                # Handle text messages (control messages)
                 try:
                     message = json.loads(data)
                     message_type = message.get('type')
 
                     if message_type == 'KeepAlive':
-                        # Client keepalive - just acknowledge
-                        pass
+                        # Client keepalive - send to Deepgram
+                        deepgram_connection.send_control(ListenV1ControlMessage(type="KeepAlive"))
                     elif message_type == 'CloseStream':
                         # Client requesting graceful close
                         print("Client requested stream close")
                         break
                     elif message_type == 'Finalize':
                         # Client requesting finalization
-                        if deepgram_connection:
-                            deepgram_connection.finish()
+                        deepgram_connection.send_control(ListenV1ControlMessage(type="Finalize"))
                 except json.JSONDecodeError:
                     print(f"Received invalid JSON: {data}")
                 except Exception as e:
@@ -295,18 +285,21 @@ def live_transcription(ws):
     finally:
         # Cleanup
         print("Cleaning up connection...")
-
-        # Stop keepalive thread
-        stop_keepalive.set()
-        if keep_alive_thread:
-            keep_alive_thread.join(timeout=1)
+        stop_event.set()
 
         # Close Deepgram connection
         if deepgram_connection:
             try:
                 deepgram_connection.finish()
             except Exception as e:
-                print(f"Error closing Deepgram connection: {e}")
+                print(f"Error finishing Deepgram connection: {e}")
+
+        # Exit the context manager
+        if deepgram_context:
+            try:
+                deepgram_context.__exit__(None, None, None)
+            except Exception as e:
+                print(f"Error exiting context manager: {e}")
 
         print("Connection cleanup complete")
 
