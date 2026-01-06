@@ -20,4 +20,4 @@ sample = "sample.env"
 output = ".env"
 
 [post-build]
-message = "Run `flask run -p 3000` to get up and running."
+message = "Run `python app.py` to get up and running on port 3000."
