@@ -76,7 +76,7 @@ Please follow these steps:
 3. Test both backend and frontend changes:
    ```bash
    # Test backend
-   flask run -p 3000
+   python app.py
 
    # Rebuild frontend if modified
    cd frontend && pnpm run build && cd ..
