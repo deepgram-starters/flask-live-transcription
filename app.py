@@ -140,6 +140,16 @@ def live_transcription(ws):
             """Handle Deepgram connection open"""
             print(f"Deepgram connection opened - model: {model}, language: {language}")
 
+            # Notify client we're ready to receive audio
+            ready_message = {
+                'type': 'Ready',
+                'message': 'Ready to receive audio'
+            }
+            try:
+                ws.send(json.dumps(ready_message))
+            except Exception as e:
+                print(f"Error sending ready message: {e}")
+
         def on_message(result: ListenV1SocketClientResponse):
             """Handle transcript results from Deepgram"""
             try:
