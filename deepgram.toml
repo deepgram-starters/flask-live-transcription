@@ -2,7 +2,7 @@
 title = "Flask Live Transcription Starter"
 description = "Get started using Deepgram's Live Transcription with this Flask demo app"
 author = "Deepgram DX Team <devrel@deepgram.com> (https://developers.deepgram.com)"
-useCase = "Live"
+useCase = "Live STT"
 language = "Python"
 framework = "Flask"
 sdk = "5.3.0"
