@@ -1,17 +1,23 @@
 [meta]
-  title = "Flask Live Transcription Starter"
-  description = "Get started using Deepgram's Live Transcription with this Flask demo app"
-  author = "Deepgram DX Team <devrel@deepgram.com> (https://developers.deepgram.com)"
-  useCase = "Live"
-  language = "Python"
-  framework = "Flask"
+title = "Flask Live Transcription Starter"
+description = "Get started using Deepgram's Live Transcription with this Flask demo app"
+author = "Deepgram DX Team <devrel@deepgram.com> (https://developers.deepgram.com)"
+useCase = "Live"
+language = "Python"
+framework = "Flask"
+sdk = "5.3.0"
+
+[pre-build]
+command = "cd frontend && pnpm install"
+message = "Frontend dependencies installed"
 
 [build]
-  command = "pip install -r requirements.txt"
+command = "pip install -r requirements.txt && cd frontend && pnpm run build"
+message = "Backend and frontend built"
 
 [config]
-  sample = "sample.env"
-  output = ".env"
+sample = "sample.env"
+output = ".env"
 
 [post-build]
-  message = "Run `python app.py` to get up and running." # message to give users once setup is complete
+message = "Run `python app.py` to get up and running on port 3000."
