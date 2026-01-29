@@ -37,7 +37,7 @@ load_dotenv(override=False)
 # Default transcription model to use when none is specified
 DEFAULT_MODEL = "nova-3"
 DEFAULT_LANGUAGE = "en"
-DEFAULT_PORT = 3000
+DEFAULT_PORT = 8080
 
 # ============================================================================
 # API KEY VALIDATION
