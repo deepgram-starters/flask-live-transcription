@@ -6,18 +6,19 @@ useCase = "Live STT"
 language = "Python"
 framework = "Flask"
 sdk = "5.3.0"
+repository = "https://github.com/deepgram-starters/flask-live-transcription"
 
 [pre-build]
-command = "cd frontend && pnpm install"
-message = "Frontend dependencies installed"
+command = "make init"
+message = "Dependencies installed (Python + frontend)"
 
 [build]
-command = "pip install -r requirements.txt && cd frontend && pnpm run build"
-message = "Backend and frontend built"
+command = "make build"
+message = "Build completed"
 
-[config]
+[build.config]
 sample = "sample.env"
 output = ".env"
 
 [post-build]
-message = "Run `python app.py` to get up and running on port 3000."
+message = "Run `make start` to get up and running."
