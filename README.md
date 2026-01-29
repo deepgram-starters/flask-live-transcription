@@ -1,33 +1,40 @@
 # Flask Live Transcription Starter
 
-Live Speech-to-Text demo using Deepgram's API with Python Flask backend and web frontend.
+Live speech-to-text transcription demo using Deepgram's API with Python Flask backend and web frontend.
 
 ## Prerequisites
 
 - [Deepgram API Key](https://console.deepgram.com/signup?jump=keys) (sign up for free)
 - Python 3.9+
-- Node.js 14+ and pnpm (for frontend build)
+- pnpm 10+ (for frontend)
+
+**Note:** This project uses git submodules for the frontend.
 
 ## Quick Start
 
-### 1. Install dependencies
+1. **Clone the repository**
 
-**Backend (Python):**
+Clone the repository with submodules (the frontend is a shared submodule):
 
 ```bash
+git clone --recurse-submodules https://github.com/deepgram-starters/flask-live-transcription.git
+cd flask-live-transcription
+```
+
+2. **Install dependencies**
+
+```bash
+# Option 1: Use Makefile (recommended)
+make init
+
+# Option 2: Manual install
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
+cd frontend && pnpm install && cd ..
 ```
 
-**Frontend:**
-
-```bash
-cd frontend
-pnpm install
-pnpm run build
-cd ..
-```
-
-### 2. Set your API key
+3. **Set your API key**
 
 Create a `.env` file:
 
@@ -35,68 +42,94 @@ Create a `.env` file:
 DEEPGRAM_API_KEY=your_api_key_here
 ```
 
-### 3. Run the app
+4. **Run the app**
 
-**Production mode**:
-
-```bash
-python app.py
-```
-
-Open [http://localhost:3000](http://localhost:3000)
-
-**Development mode with frontend HMR** (optional, for frontend development):
+**Development mode** (with hot reload):
 
 ```bash
-# Terminal 1: Backend
-python app.py
-
-# Terminal 2: Frontend dev server with instant reload
-cd frontend && pnpm run dev
+make dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173)
+**Production mode** (build and serve):
 
+```bash
+make build
+make start
+```
+
+### 🌐 Open the App
+[http://localhost:8080](http://localhost:8080)
 
 ## Features
 
-This application:
+- Real-time speech-to-text transcription
+- Live audio streaming with visual feedback
+- Multiple model options
+- Connection statistics
 
-- Accepts a live audio stream URL via WebSocket connection
-- Fetches the audio stream from the provided URL
-- Sends binary audio data to Deepgram's live Speech-to-Text API
-- Returns real-time transcription results to the client
+## Architecture
+
+### Backend
+Flask server with WebSocket support (using Flask-Sock):
+- WebSocket endpoint: `/live-stt/stream`
+- Accepts binary audio streams from frontend
+- Proxies audio to Deepgram's live API
+- Streams back real-time transcription results
+- Serves built frontend from `frontend/dist/`
+
+### Frontend
+- Real-time microphone capture and transcription
+- Pure vanilla JavaScript (no frameworks)
+- Deepgram Design System for styling
 
 ## How It Works
 
-- **Backend** (`app.py`): Flask server implementing the `/stt/transcribe` endpoint per the STT API contract
-- **Frontend** (`frontend/`): Vite-powered web UI built with Deepgram design system
-- **API**: Integrates with [Deepgram's Speech-to-Text API](https://developers.deepgram.com/)
+1. **Client connects** to `/live-stt/stream` WebSocket endpoint with optional model and language parameters
+2. **Flask-Sock** handles the WebSocket connection using native WebSocket support
+3. **Server establishes** a connection to Deepgram's live API
+4. **Audio flows** from client → Flask → Deepgram
+5. **Transcripts stream** back from Deepgram → Flask → client in real-time
+6. **Results formatted** according to the live-stt API contract with type, transcript, confidence, and metadata
 
-The frontend is built with Vite and served as static files from `frontend/dist/`. This ensures a consistent UI across all Deepgram starter apps regardless of backend language.
+## Makefile Commands
+
+This project includes a Makefile for framework-agnostic operations:
+
+```bash
+make help              # Show all available commands
+make init              # Initialize submodules and install dependencies
+make dev               # Start development servers
+make build             # Build frontend for production
+make start             # Start production server
+make update            # Update submodules to latest
+make clean             # Remove venv, node_modules and build artifacts
+make status            # Show git and submodule status
+```
+
+Use `make` commands for a consistent experience regardless of language.
 
 ## Getting Help
 
-We love to hear from you so if you have questions, comments or find a bug in the project, let us know! You can either:
-
-- [Open an issue in this repository](https://github.com/deepgram-starters/flask-live-transcription/issues/new)
-- [Join the Deepgram Github Discussions Community](https://github.com/orgs/deepgram/discussions)
-- [Join the Deepgram Discord Community](https://discord.gg/xWRaCDBtW4)
-
-## Contributing
-
-See our [Contributing Guidelines](./CONTRIBUTING.md) to learn about contributing to this project.
-
-## Code of Conduct
-
-This project follows the Deepgram [Code of Conduct](./CODE_OF_CONDUCT.md)
+- [Open an issue](https://github.com/deepgram-starters/flask-live-transcription/issues/new)
+- [Join our Discord](https://discord.gg/xWRaCDBtW4)
+- [Deepgram Documentation](https://developers.deepgram.com/)
 
 ## Security
 
-For security policy and procedures, see our [Security Policy](./SECURITY.md)
+This project implements security best practices including:
+- Dependency pinning to exact versions
+- Automated vulnerability scanning with Snyk
+- Environment variable management
 
+See [SECURITY.md](./.github/SECURITY.md) for complete security documentation and reporting procedures.
 
+## Contributing
+
+Contributions are welcome! Please review:
+- [Contributing Guidelines](./.github/CONTRIBUTING.md)
+- [Code of Conduct](./.github/CODE_OF_CONDUCT.md)
+- [Security Policy](./.github/SECURITY.md)
 
 ## License
 
-MIT See [LICENSE](./LICENSE)
+MIT - See [LICENSE](./LICENSE)
