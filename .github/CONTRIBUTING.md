@@ -2,7 +2,7 @@
 
 We welcome contributions! Before adding new functionality, open an issue first. Bug reports, fixes, and feedback are always appreciated.
 
-Please take the time to review the [Code of Conduct](CODE_OF_CONDUCT.md), which all contributors are subject to on this project.
+Please take the time to review the [Code of Conduct](./CODE_OF_CONDUCT.md), which all contributors are subject to on this project.
 
 ## Prerequisites
 
@@ -72,7 +72,7 @@ Check `beginner` and `help-wanted` issues to get started.
 
 Please follow these steps:
 1. Use the Pull Request template
-2. Follow the [Code of Conduct](CODE_OF_CONDUCT.md)
+2. Follow the [Code of Conduct](./CODE_OF_CONDUCT.md)
 3. Test both backend and frontend changes:
    ```bash
    # Test backend
@@ -83,7 +83,7 @@ Please follow these steps:
    ```
 4. Ensure all [status checks](https://help.github.com/articles/about-status-checks/) pass before review
    - All dependencies should be pinned to exact versions
-   - Test the `/stt/transcribe` endpoint matches the API contract
+   - Test the `/live-stt/stream` WebSocket endpoint matches the API contract
 
 Note: Reviewers may request additional changes before merging.
 
@@ -102,7 +102,7 @@ Note: Reviewers may request additional changes before merging.
 
 ## Security
 
-Review the [Security Policy](SECURITY.md) for:
+Review the [Security Policy](./SECURITY.md) for:
 - Reporting security vulnerabilities
 - Dependency management
 - API key handling best practices
