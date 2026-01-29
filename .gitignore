@@ -24,6 +24,9 @@ frontend/yarn.lock
 .env.local
 *.local
 
+# Deepgram local workspace
+.deepgram/
+
 # Logs
 *.log
 
