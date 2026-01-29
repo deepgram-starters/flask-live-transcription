@@ -133,7 +133,7 @@ def get_metadata():
 # WEBSOCKET ENDPOINT - Live Transcription
 # ============================================================================
 
-@sock.route('/live-stt/stream')
+@sock.route('/stt/stream')
 def live_transcription(ws):
     """
     WebSocket endpoint for live speech-to-text transcription
@@ -146,7 +146,7 @@ def live_transcription(ws):
     - type: "Results" | "Metadata" | "Error"
     - transcript, is_final, confidence, words, etc.
     """
-    print("Client connected to /live-stt/stream")
+    print("Client connected to /stt/stream")
 
     # Get query parameters from request
     model = request.args.get('model', DEFAULT_MODEL)
@@ -385,7 +385,7 @@ if __name__ == "__main__":
     print("\n" + "=" * 70)
     print(f"🚀 Flask Live Transcription Server running at http://localhost:{port}")
     print(f"📦 Serving built frontend from frontend/dist")
-    print(f"🔌 WebSocket endpoint: ws://localhost:{port}/live-stt/stream")
+    print(f"🔌 WebSocket endpoint: ws://localhost:{port}/stt/stream")
     print(f"🐞 Debug mode: {'ON' if debug else 'OFF'}")
     print("=" * 70 + "\n")
 
