@@ -159,10 +159,18 @@ def live_transcription(ws):
     client_message_count = 0
     deepgram_message_count = 0
     stop_event = threading.Event()
+    deepgram_ready = threading.Event()
 
     def on_deepgram_message(dg_ws, message):
         """Forward messages from Deepgram to client"""
         nonlocal deepgram_message_count
+
+        # Wait for client to be ready before forwarding
+        if not deepgram_ready.wait(timeout=5):
+            print("Timeout waiting for client to be ready")
+            stop_event.set()
+            return
+
         deepgram_message_count += 1
 
         # Log every 10th message or non-binary messages
@@ -206,6 +214,14 @@ def live_transcription(ws):
         dg_thread = threading.Thread(target=deepgram_ws.run_forever)
         dg_thread.daemon = True
         dg_thread.start()
+
+        # Wait a moment for Deepgram connection to initialize
+        import time
+        time.sleep(0.1)
+
+        # Signal that we're ready to receive Deepgram messages
+        deepgram_ready.set()
+        print("✓ Ready to forward messages")
 
         # Forward messages from client to Deepgram
         while not stop_event.is_set():
