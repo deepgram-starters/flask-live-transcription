@@ -1,24 +1,51 @@
 [meta]
-title = "Flask Live Transcription Starter"
+title = "Flask Live Transcription"
 description = "Get started using Deepgram's Live Transcription with this Flask demo app"
 author = "Deepgram DX Team <devrel@deepgram.com> (https://developers.deepgram.com)"
-useCase = "Live STT"
+repository = "https://github.com/deepgram-starters/flask-live-transcription"
+useCase = "live-transcription"
 language = "Python"
 framework = "Flask"
-sdk = "5.3.0"
-repository = "https://github.com/deepgram-starters/flask-live-transcription"
+sdk = "N/A"
 
-[pre-build]
-command = "make init"
-message = "Dependencies installed (Python + frontend)"
+# Check prerequisites
+[check]
+command = ["git --version", "python3 --version", "pip3 --version"]
+message = "All prerequisites installed"
 
-[build]
-command = "make build"
-message = "Build completed"
+# Install dependencies
+[install.pre]
+command = "git submodule update --init --recursive"
+message = "Submodules initialized"
 
-[build.config]
+[install]
+command = ["python3 -m venv venv", "./venv/bin/pip install -r requirements.txt", "cd frontend && corepack pnpm install"]
+message = "Dependencies installed"
+
+[install.post]
+command = "test -f .env || cp sample.env .env"
+message = "Environment configuration ready"
+
+[install.config]
 sample = "sample.env"
 output = ".env"
 
-[post-build]
-message = "Run `make start` to get up and running."
+# Start application
+[start.pre]
+command = "test -f .env || (echo '❌ .env not found. Run: cp sample.env .env' && exit 1)"
+message = "Environment validated"
+
+[start]
+command = ["./venv/bin/python app.py", "cd frontend && corepack pnpm run dev -- --port 8080 --no-open"]
+parallel = true
+message = "Application running on http://localhost:8080"
+
+# Update submodules
+[update]
+command = "git submodule update --remote --merge"
+message = "Submodules updated"
+
+# Clean artifacts
+[clean]
+command = ["rm -rf venv", "rm -rf frontend/node_modules", "rm -rf frontend/.vite", "find . -type f -name '*.pyc' -delete", "find . -type d -name __pycache__ -exec rm -rf {} +"]
+message = "Build artifacts cleaned"
