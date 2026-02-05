@@ -1,4 +1,4 @@
-.PHONY: help check-prereqs init install install-backend install-frontend start-backend start-frontend start update clean status
+.PHONY: help check check-prereqs init install install-backend install-frontend start-backend start-frontend start test update clean status
 
 help:
 	@echo "Available commands:"
@@ -20,6 +20,8 @@ check-prereqs:
 	@command -v pip3 >/dev/null 2>&1 || { echo "❌ pip3 is required but not installed."; exit 1; }
 	@echo "✓ All prerequisites installed"
 	@echo ""
+check: check-prereqs
+
 
 init: check-prereqs
 	@echo "==> Initializing submodules..."
@@ -91,6 +93,19 @@ update:
 	@echo "Updating submodules..."
 	git submodule update --remote --merge
 	@echo "Submodules updated!"
+
+test:
+	@if [ ! -f ".env" ]; then \
+		echo "❌ Error: .env file not found. Copy sample.env to .env and add your DEEPGRAM_API_KEY"; \
+		exit 1; \
+	fi
+	@if [ ! -d "contracts" ] || [ -z "$$(ls -A contracts)" ]; then \
+		echo "❌ Error: Contracts submodule not initialized. Run 'make init' first."; \
+		exit 1; \
+	fi
+	@echo "==> Running contract conformance tests..."
+	@bash contracts/tests/run-live-transcription-app.sh
+
 
 clean:
 	@echo "Cleaning build artifacts..."
