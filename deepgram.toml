@@ -50,3 +50,8 @@ message = "Submodules updated"
 [clean]
 command = ["rm -rf venv", "rm -rf frontend/node_modules", "rm -rf frontend/.vite", "find . -type f -name '*.pyc' -delete", "find . -type d -name __pycache__ -exec rm -rf {} +"]
 message = "Build artifacts cleaned"
+
+# Eject frontend and contracts submodules for standalone development
+[eject-frontend]
+command = "make eject-frontend"
+message = "Frontend ejected successfully"

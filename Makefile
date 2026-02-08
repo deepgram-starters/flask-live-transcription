@@ -1,4 +1,4 @@
-.PHONY: help check check-prereqs init install install-backend install-frontend start-backend start-frontend start test update clean status
+.PHONY: help check check-prereqs init install install-backend install-frontend start-backend start-frontend start test update clean status eject-frontend
 
 help:
 	@echo "Available commands:"
@@ -12,6 +12,7 @@ help:
 	@echo "  make update            - Update submodules to latest"
 	@echo "  make clean             - Remove venv, node_modules and build artifacts"
 	@echo "  make status            - Show git and submodule status"
+	@echo "  make eject-frontend    - Eject frontend/contracts submodules for standalone dev"
 
 check-prereqs:
 	@echo "==> Checking prerequisites..."
@@ -121,3 +122,48 @@ status:
 	@git status --short
 	@echo "\nSubmodule status:"
 	@git submodule status
+
+eject-frontend:
+	@echo ""
+	@echo "⚠️  This will:"
+	@echo "   1. Copy frontend submodule files into a regular 'frontend/' directory"
+	@echo "   2. Remove the frontend git submodule configuration"
+	@echo "   3. Remove the contracts git submodule"
+	@echo "   4. Remove .gitmodules file"
+	@echo ""
+	@echo "   After ejecting, frontend changes can be committed directly"
+	@echo "   with your backend changes. This cannot be undone."
+	@echo ""
+	@read -p "   Continue? [Y/n] " confirm; \
+	if [ "$$confirm" != "Y" ] && [ "$$confirm" != "y" ] && [ -n "$$confirm" ]; then \
+		echo "   Cancelled."; \
+		exit 1; \
+	fi
+	@echo ""
+	@echo "==> Ejecting frontend submodule..."
+	@FRONTEND_TMP=$$(mktemp -d); \
+	cp -r frontend/. "$$FRONTEND_TMP/"; \
+	git submodule deinit -f frontend; \
+	git rm -f frontend; \
+	rm -rf .git/modules/frontend; \
+	mkdir -p frontend; \
+	cp -r "$$FRONTEND_TMP/." frontend/; \
+	rm -rf "$$FRONTEND_TMP"; \
+	rm -rf frontend/.git; \
+	echo "   ✅ Frontend ejected to regular directory"
+	@echo "==> Removing contracts submodule..."
+	@if git config --file .gitmodules submodule.contracts.url > /dev/null 2>&1; then \
+		git submodule deinit -f contracts; \
+		git rm -f contracts; \
+		rm -rf .git/modules/contracts; \
+		echo "   ✅ Contracts submodule removed"; \
+	else \
+		echo "   ℹ️  No contracts submodule found"; \
+	fi
+	@if [ -f .gitmodules ] && [ ! -s .gitmodules ]; then \
+		git rm -f .gitmodules; \
+		echo "   ✅ Empty .gitmodules removed"; \
+	fi
+	@echo ""
+	@echo "✅ Eject complete! Frontend files are now regular tracked files."
+	@echo "   Run 'git add . && git commit' to save the changes."
