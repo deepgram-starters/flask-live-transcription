@@ -3,6 +3,10 @@ Flask Live Transcription Starter - Backend Server
 
 Simple WebSocket proxy to Deepgram's Live STT API.
 Forwards all messages (JSON and binary) bidirectionally between client and Deepgram.
+
+API Endpoints:
+- WS /api/live-transcription - WebSocket endpoint for live transcription
+- GET /api/metadata - Returns metadata from deepgram.toml
 """
 
 import os
@@ -29,7 +33,6 @@ DEFAULT_LANGUAGE = "en"
 CONFIG = {
     "port": int(os.environ.get("PORT", 8081)),
     "host": os.environ.get("HOST", "0.0.0.0"),
-    "frontend_port": int(os.environ.get("FRONTEND_PORT", 8080)),
 }
 
 # ============================================================================
@@ -66,11 +69,7 @@ API_KEY = validate_api_key()
 app = Flask(__name__)
 
 # Enable CORS for frontend communication
-# Frontend runs on port 8080, backend on port 8081
-CORS(app, origins=[
-    f"http://localhost:{CONFIG['frontend_port']}",
-    f"http://127.0.0.1:{CONFIG['frontend_port']}"
-], supports_credentials=True)
+CORS(app)
 
 # Initialize native WebSocket support
 sock = Sock(app)
@@ -116,7 +115,7 @@ def get_metadata():
 # WEBSOCKET ENDPOINT
 # ============================================================================
 
-@sock.route('/stt/stream')
+@sock.route('/api/live-transcription')
 def live_transcription(ws):
     """
     WebSocket endpoint for live speech-to-text transcription
@@ -131,7 +130,7 @@ def live_transcription(ws):
 
     The client sends binary audio data and receives JSON transcription messages.
     """
-    print("Client connected to /stt/stream")
+    print("Client connected to /api/live-transcription")
 
     # Get query parameters from request
     model = request.args.get('model', DEFAULT_MODEL)
@@ -264,7 +263,7 @@ def live_transcription(ws):
         except Exception as e:
             print(f"Error closing Deepgram connection: {e}")
 
-        print("Client disconnected from /stt/stream")
+        print("Client disconnected from /api/live-transcription")
 
 # ============================================================================
 # SERVER START
@@ -273,17 +272,16 @@ def live_transcription(ws):
 if __name__ == "__main__":
     port = CONFIG["port"]
     host = CONFIG["host"]
-    frontend_port = CONFIG["frontend_port"]
     debug = os.environ.get("FLASK_DEBUG", "0") == "1"
 
     print("\n" + "=" * 70)
     print(f"🚀 Flask Live Transcription Server (Backend API)")
     print("=" * 70)
-    print(f"Backend:  http://localhost:{port}")
-    print(f"Frontend: http://localhost:{frontend_port}")
-    print(f"WebSocket: ws://localhost:{port}/stt/stream")
-    print(f"CORS:     Enabled for frontend port {frontend_port}")
+    print(f"Server:   http://{host}:{port}")
     print(f"Debug:    {'ON' if debug else 'OFF'}")
+    print("")
+    print("📡 WS   /api/live-transcription")
+    print("📡 GET  /api/metadata")
     print("=" * 70 + "\n")
 
     app.run(host=host, port=port, debug=debug)

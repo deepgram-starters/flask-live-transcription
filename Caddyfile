@@ -1,0 +1,11 @@
+:8080 {
+	handle /api/* {
+		reverse_proxy localhost:{$BACKEND_PORT:8081}
+	}
+
+	handle {
+		root * /app/frontend/dist
+		try_files {path} /index.html
+		file_server
+	}
+}
