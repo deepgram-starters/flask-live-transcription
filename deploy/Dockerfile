@@ -33,8 +33,8 @@ COPY config.json* ./
 COPY --from=frontend-builder /build/frontend/dist/ ./frontend/dist/
 
 # Copy shared deployment files
-COPY Caddyfile /etc/caddy/Caddyfile
-COPY start.sh ./start.sh
+COPY deploy/Caddyfile /etc/caddy/Caddyfile
+COPY deploy/start.sh ./start.sh
 RUN chmod +x ./start.sh
 
 ENV PORT=8081
