@@ -1,11 +1,22 @@
 :8080 {
+	# HTML page served by backend (injects session nonce)
+	@htmlpage {
+		path /
+		path /index.html
+	}
+	handle @htmlpage {
+		reverse_proxy localhost:{$BACKEND_PORT:8081}
+	}
+
+	# API endpoints proxied to backend
 	handle /api/* {
 		reverse_proxy localhost:{$BACKEND_PORT:8081}
 	}
 
+	# Static assets served by Caddy
 	handle {
 		root * /app/frontend/dist
-		try_files {path} /index.html
 		file_server
 	}
 }
+

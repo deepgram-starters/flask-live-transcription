@@ -6,12 +6,18 @@ Forwards all messages (JSON and binary) bidirectionally between client and Deepg
 
 API Endpoints:
 - WS /api/live-transcription - WebSocket endpoint for live transcription
+- GET /api/session - JWT session token endpoint
 - GET /api/metadata - Returns metadata from deepgram.toml
 """
 
+import functools
 import os
+import secrets
 import threading
-from flask import Flask, request, jsonify
+import time
+
+import jwt
+from flask import Flask, request, jsonify, make_response
 from flask_sock import Sock
 from flask_cors import CORS
 from urllib.parse import urlencode
@@ -34,6 +40,66 @@ CONFIG = {
     "port": int(os.environ.get("PORT", 8081)),
     "host": os.environ.get("HOST", "0.0.0.0"),
 }
+
+# ============================================================================
+# SESSION AUTH - JWT tokens with page nonce for production security
+# ============================================================================
+
+SESSION_SECRET = os.environ.get("SESSION_SECRET") or secrets.token_hex(32)
+REQUIRE_NONCE = bool(os.environ.get("SESSION_SECRET"))
+
+# In-memory nonce store: nonce -> expiry timestamp
+session_nonces = {}
+NONCE_TTL = 5 * 60  # 5 minutes
+JWT_EXPIRY = 3600  # 1 hour
+
+
+def generate_nonce():
+    """Generates a single-use nonce and stores it with an expiry."""
+    nonce = secrets.token_hex(16)
+    session_nonces[nonce] = time.time() + NONCE_TTL
+    return nonce
+
+
+def consume_nonce(nonce):
+    """Validates and consumes a nonce (single-use). Returns True if valid."""
+    expiry = session_nonces.pop(nonce, None)
+    if expiry is None:
+        return False
+    return time.time() < expiry
+
+
+def cleanup_nonces():
+    """Remove expired nonces."""
+    now = time.time()
+    expired = [k for k, v in session_nonces.items() if now >= v]
+    for k in expired:
+        del session_nonces[k]
+
+
+# Read frontend/dist/index.html template for nonce injection
+_index_html_template = None
+try:
+    with open(os.path.join(os.path.dirname(__file__), "frontend", "dist", "index.html")) as f:
+        _index_html_template = f.read()
+except FileNotFoundError:
+    pass  # No built frontend (dev mode)
+
+
+def validate_ws_token():
+    """Validates JWT from Sec-WebSocket-Protocol: access_token.<jwt> header."""
+    protocol_header = request.headers.get("Sec-WebSocket-Protocol", "")
+    protocols = [p.strip() for p in protocol_header.split(",")]
+    token_proto = next((p for p in protocols if p.startswith("access_token.")), None)
+    if not token_proto:
+        return None
+    token = token_proto[len("access_token."):]
+    try:
+        jwt.decode(token, SESSION_SECRET, algorithms=["HS256"])
+        return token_proto
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+        return None
+
 
 # ============================================================================
 # API KEY VALIDATION
@@ -73,6 +139,48 @@ CORS(app)
 
 # Initialize native WebSocket support
 sock = Sock(app)
+
+# ============================================================================
+# SESSION ROUTES - Auth endpoints (unprotected)
+# ============================================================================
+
+@app.route("/", methods=["GET"])
+def serve_index():
+    """Serve index.html with injected session nonce (production only)."""
+    if not _index_html_template:
+        return "Frontend not built. Run make build first.", 404
+    cleanup_nonces()
+    nonce = generate_nonce()
+    html = _index_html_template.replace(
+        "</head>",
+        f'<meta name="session-nonce" content="{nonce}">\n</head>'
+    )
+    response = make_response(html)
+    response.headers["Content-Type"] = "text/html"
+    return response
+
+
+@app.route("/api/session", methods=["GET"])
+def get_session():
+    """Issues a JWT. In production, requires valid nonce via X-Session-Nonce header."""
+    if REQUIRE_NONCE:
+        nonce = request.headers.get("X-Session-Nonce")
+        if not nonce or not consume_nonce(nonce):
+            return jsonify({
+                "error": {
+                    "type": "AuthenticationError",
+                    "code": "INVALID_NONCE",
+                    "message": "Valid session nonce required. Please refresh the page.",
+                }
+            }), 403
+
+    token = jwt.encode(
+        {"iat": int(time.time()), "exp": int(time.time()) + JWT_EXPIRY},
+        SESSION_SECRET,
+        algorithm="HS256",
+    )
+    return jsonify({"token": token})
+
 
 # ============================================================================
 # HTTP ROUTES
@@ -130,6 +238,12 @@ def live_transcription(ws):
 
     The client sends binary audio data and receives JSON transcription messages.
     """
+    # Validate JWT from WebSocket subprotocol
+    valid_proto = validate_ws_token()
+    if not valid_proto:
+        ws.close(4401, "Unauthorized")
+        return
+
     print("Client connected to /api/live-transcription")
 
     # Get query parameters from request
@@ -214,7 +328,6 @@ def live_transcription(ws):
         dg_thread.start()
 
         # Wait a moment for Deepgram connection to initialize
-        import time
         time.sleep(0.1)
 
         # Signal that we're ready to receive Deepgram messages
@@ -274,13 +387,15 @@ if __name__ == "__main__":
     host = CONFIG["host"]
     debug = os.environ.get("FLASK_DEBUG", "0") == "1"
 
+    nonce_status = " (nonce required)" if REQUIRE_NONCE else ""
     print("\n" + "=" * 70)
     print(f"🚀 Flask Live Transcription Server (Backend API)")
     print("=" * 70)
     print(f"Server:   http://{host}:{port}")
     print(f"Debug:    {'ON' if debug else 'OFF'}")
     print("")
-    print("📡 WS   /api/live-transcription")
+    print(f"📡 GET  /api/session{nonce_status}")
+    print("📡 WS   /api/live-transcription (auth required)")
     print("📡 GET  /api/metadata")
     print("=" * 70 + "\n")
 
