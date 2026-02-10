@@ -1,4 +1,11 @@
-# Stage 1: Build frontend
+# Stage 1: Build custom Caddy with rate limiting module
+FROM golang:1.25-alpine AS caddy-builder
+WORKDIR /build
+RUN go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
+RUN xcaddy build --with github.com/mholt/caddy-ratelimit
+# Binary output: /build/caddy
+
+# Stage 2: Build frontend
 FROM node:24-slim AS frontend-builder
 RUN corepack enable
 WORKDIR /build
@@ -6,18 +13,14 @@ COPY frontend/package.json frontend/pnpm-lock.yaml ./frontend/
 RUN cd frontend && pnpm install --frozen-lockfile
 COPY frontend/ ./frontend/
 RUN cd frontend && pnpm build
+# Inject Caddy template directives for subpath base path + session nonce
+RUN sed -i 's|<head>|<head>\n  <base href="{{ .Req.Header.Get "X-Base-Path" }}">\n  <meta name="session-nonce" content="{{ placeholder "http.request.uuid" }}">|' ./frontend/dist/index.html
 
-# Stage 2: Runtime
+# Stage 3: Runtime
 FROM python:3.13-slim
 
-# Install Caddy
-RUN apt-get update && \
-    apt-get install -y debian-keyring debian-archive-keyring apt-transport-https curl && \
-    curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg && \
-    curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list && \
-    apt-get update && \
-    apt-get install -y caddy && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+# Copy custom Caddy binary
+COPY --from=caddy-builder /build/caddy /usr/bin/caddy
 
 WORKDIR /app
 
