@@ -3,7 +3,7 @@
 }
 
 :8080 {
-	# HTML page: Caddy templates inject base path + session nonce
+	# HTML page: Caddy templates inject base path
 	@htmlpage {
 		path /
 		path /index.html

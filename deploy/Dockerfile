@@ -13,8 +13,8 @@ COPY frontend/package.json frontend/pnpm-lock.yaml ./frontend/
 RUN cd frontend && pnpm install --frozen-lockfile
 COPY frontend/ ./frontend/
 RUN cd frontend && pnpm build
-# Inject Caddy template directives for subpath base path + session nonce
-RUN sed -i 's|<head>|<head>\n  <base href="{{ .Req.Header.Get "X-Base-Path" }}">\n  <meta name="session-nonce" content="{{ placeholder "http.request.uuid" }}">|' ./frontend/dist/index.html
+# Inject Caddy template directive for subpath base path
+RUN sed -i 's|<head>|<head>\n  <base href="{{ .Req.Header.Get "X-Base-Path" }}">|' ./frontend/dist/index.html
 
 # Stage 3: Runtime
 FROM python:3.13-slim
