@@ -20,10 +20,29 @@ import jwt
 from flask import Flask, request, jsonify, send_from_directory
 from flask_sock import Sock
 from flask_cors import CORS
+from simple_websocket import Server as _WsServer
 from urllib.parse import urlencode
 import websocket
 import toml
 from dotenv import load_dotenv
+
+# Monkey-patch simple-websocket to echo back the access_token.* subprotocol.
+# flask-sock uses simple-websocket's Server class for the WebSocket handshake.
+# By default, Server.choose_subprotocol only accepts subprotocols that are in a
+# static allow-list, which doesn't work for dynamic JWT-bearing subprotocols.
+# This override makes the server echo back any access_token.* subprotocol so the
+# client receives the Sec-WebSocket-Protocol response header it expects.
+_original_choose_subprotocol = _WsServer.choose_subprotocol
+
+
+def _choose_subprotocol_with_token(self, ws_request):
+    for proto in ws_request.subprotocols:
+        if proto.startswith("access_token."):
+            return proto
+    return _original_choose_subprotocol(self, ws_request)
+
+
+_WsServer.choose_subprotocol = _choose_subprotocol_with_token
 
 # Load .env file (won't override existing environment variables)
 load_dotenv(override=False)

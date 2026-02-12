@@ -27,12 +27,12 @@
 		reverse_proxy localhost:{$BACKEND_PORT:8081}
 	}
 
-	# API endpoints: 30 req/min per IP
+	# API endpoints: 120 req/min per IP
 	handle /api/* {
 		rate_limit {
 			zone api {
 				key {remote_host}
-				events 30
+				events 120
 				window 1m
 			}
 		}
