@@ -39,6 +39,11 @@
 		reverse_proxy localhost:{$BACKEND_PORT:8081}
 	}
 
+	# Health check: proxied to backend (used by Fly.io)
+	handle /health {
+		reverse_proxy localhost:{$BACKEND_PORT:8081}
+	}
+
 	# Static assets served by Caddy
 	handle {
 		root * /app/frontend/dist
