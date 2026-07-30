@@ -6,7 +6,7 @@ repository = "https://github.com/deepgram-starters/flask-live-transcription"
 useCase = "live-transcription"
 language = "python"
 framework = "flask"
-sdk = "N/A"
+sdk = "deepgram-sdk"
 tags = ["live-transcription", "live-stt", "real-time-transcription", "real-time-asr", "streaming-transcription", "live-speech-to-text", "python", "flask"]
 
 # Check prerequisites
