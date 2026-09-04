@@ -6,4 +6,4 @@ python-dotenv==1.0.1
 toml==0.10.2
 werkzeug==3.1.4
 
-deepgram-sdk>=7.7.0
+deepgram-sdk>=7.7.0,<8.0.0
