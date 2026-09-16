@@ -108,7 +108,6 @@ The browser can send these parameters to this starter's WebSocket endpoint:
 | Diarization | `diarize` | `true` | Speaker identification |
 | Punctuation | `punctuate` | `true` | Auto-punctuation |
 | Keywords | `keywords` | `deepgram:2` | Boost keyword with weight |
-| No delay | `no_delay` | `true` | Minimize latency (may reduce accuracy) |
 
 **Backend:** Read the parameter from `request.args` in the WebSocket proxy handler and pass it to `deepgram.listen.v1.connect(...)`. Parameters the backend does not read are dropped.
 

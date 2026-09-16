@@ -9,6 +9,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      DEEPGRAM_API_KEY: test-only-key
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
