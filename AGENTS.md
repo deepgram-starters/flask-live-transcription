@@ -85,7 +85,7 @@ Frontend: `cd frontend && corepack pnpm install`
 ## Customization Guide
 
 ### Changing Default Parameters
-The WebSocket connection URL passes parameters to Deepgram. Find where the Deepgram WebSocket URL is constructed in the backend and modify defaults:
+The browser passes parameters to this backend. The backend reads them in `app.py` and passes them as keyword arguments to `deepgram.listen.v1.connect(...)`.
 
 | Parameter | Default | Options | Effect |
 |-----------|---------|---------|--------|
@@ -96,8 +96,8 @@ The WebSocket connection URL passes parameters to Deepgram. Find where the Deepg
 | `sample_rate` | `16000` | `8000`, `16000`, `44100`, `48000` | Audio sample rate |
 | `channels` | `1` | `1`, `2` | Mono or stereo |
 
-### Adding More Deepgram Features via Query Params
-These can be appended to the Deepgram WebSocket URL as query parameters:
+### Adding More Deepgram Features
+The browser can send these parameters to this starter's WebSocket endpoint:
 
 | Feature | Parameter | Example | Effect |
 |---------|-----------|---------|--------|
@@ -110,9 +110,9 @@ These can be appended to the Deepgram WebSocket URL as query parameters:
 | Keywords | `keywords` | `deepgram:2` | Boost keyword with weight |
 | No delay | `no_delay` | `true` | Minimize latency (may reduce accuracy) |
 
-**Backend:** Append params to the Deepgram URL in the WebSocket proxy handler.
+**Backend:** Read the parameter from `request.args` in the WebSocket proxy handler and pass it to `deepgram.listen.v1.connect(...)`. Parameters the backend does not read are dropped.
 
-**Frontend:** The frontend sends these as query params when opening the WebSocket. To add a UI control for a new param, edit `frontend/main.js` — add an input/checkbox and include it in the `URLSearchParams` when connecting.
+**Frontend:** The frontend sends these as query params when opening this starter's WebSocket. To add a UI control, edit `frontend/main.js` — add an input/checkbox and include it in the `URLSearchParams` when connecting.
 
 ### Changing Audio Format
 If changing from browser microphone (Linear16) to another source:
@@ -135,7 +135,7 @@ The frontend is a git submodule from `deepgram-starters/live-transcription-html`
 ### Adding a UI Control for a New Feature
 1. Add the HTML element in `frontend/index.html` (input, checkbox, dropdown, etc.)
 2. Read the value in `frontend/main.js` when making the API call or opening the WebSocket
-3. Pass it as a query parameter in the WebSocket URL
+3. Pass it as a query parameter to this starter's WebSocket endpoint
 4. Handle it in the backend `app.py` — read the param and pass it to the Deepgram API
 
 ## Environment Variables
