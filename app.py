@@ -129,6 +129,18 @@ def _forward_to_browser(ws, message):
     except Exception as e:
         print(f"Error forwarding to browser: {e}")
 
+
+def _forward_provider_error(ws, error, stop_event):
+    """Notify the browser without serializing an SDK exception or its headers."""
+    status_code = getattr(error, "status_code", None)
+    description = "Deepgram transcription error"
+    if isinstance(status_code, int):
+        description += f" (HTTP {status_code})"
+    print(f"Deepgram error: {description}")
+    _forward_to_browser(ws, {"type": "Error", "description": description})
+    stop_event.set()
+
+
 # ============================================================================
 # SETUP - Initialize Flask, WebSocket, and CORS
 # ============================================================================
@@ -248,13 +260,14 @@ def live_transcription(ws):
             model=model,
             language=language,
             smart_format=smart_format,
+            interim_results=True,
             encoding=encoding,
             sample_rate=sample_rate,
             channels=channels,
         ) as connection:
             connection.on(EventType.MESSAGE, lambda m: _forward_to_browser(ws, m))
             connection.on(EventType.CLOSE, lambda _: stop_event.set())
-            connection.on(EventType.ERROR, lambda e: (print(f"Deepgram error: {e}"), stop_event.set()))
+            connection.on(EventType.ERROR, lambda e: _forward_provider_error(ws, e, stop_event))
 
             # start_listening() blocks, so run it in a background thread while the
             # main thread forwards browser audio/control messages to Deepgram.
