@@ -122,6 +122,8 @@ def _forward_to_browser(ws, message):
             ws.send(bytes(message))
         elif isinstance(message, dict):
             ws.send(json.dumps(message))
+        elif message is None:
+            ws.send(json.dumps({"type": "Error", "description": "Deepgram transcription error"}))
         elif hasattr(message, "model_dump_json"):
             ws.send(message.model_dump_json())
         else:
@@ -246,6 +248,7 @@ def live_transcription(ws):
     model = request.args.get('model', DEFAULT_MODEL)
     language = request.args.get('language', DEFAULT_LANGUAGE)
     smart_format = request.args.get('smart_format', 'true').lower() == 'true'
+    interim_results = request.args.get('interim_results', 'false').lower() == 'true'
     encoding = request.args.get('encoding', 'linear16')
     sample_rate = int(request.args.get('sample_rate', '16000'))
     channels = int(request.args.get('channels', '1'))
@@ -260,7 +263,7 @@ def live_transcription(ws):
             model=model,
             language=language,
             smart_format=smart_format,
-            interim_results=True,
+            interim_results=interim_results,
             encoding=encoding,
             sample_rate=sample_rate,
             channels=channels,
