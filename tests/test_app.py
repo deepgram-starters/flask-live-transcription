@@ -25,3 +25,9 @@ class LiveTranscriptionTests(unittest.TestCase):
             json.loads(websocket.messages[0]),
             {"type": "Error", "description": "Deepgram transcription error"},
         )
+
+    def test_interim_results_are_disabled_by_default(self):
+        self.assertFalse(app._query_bool({}, "interim_results", False))
+
+    def test_interim_results_allow_explicit_opt_in(self):
+        self.assertTrue(app._query_bool({"interim_results": "true"}, "interim_results", False))

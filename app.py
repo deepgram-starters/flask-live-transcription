@@ -143,6 +143,11 @@ def _forward_provider_error(ws, error, stop_event):
     stop_event.set()
 
 
+def _query_bool(params, name, default):
+    value = params.get(name)
+    return default if value is None else value.lower() == 'true'
+
+
 # ============================================================================
 # SETUP - Initialize Flask, WebSocket, and CORS
 # ============================================================================
@@ -248,7 +253,7 @@ def live_transcription(ws):
     model = request.args.get('model', DEFAULT_MODEL)
     language = request.args.get('language', DEFAULT_LANGUAGE)
     smart_format = request.args.get('smart_format', 'true').lower() == 'true'
-    interim_results = request.args.get('interim_results', 'false').lower() == 'true'
+    interim_results = _query_bool(request.args, 'interim_results', False)
     encoding = request.args.get('encoding', 'linear16')
     sample_rate = int(request.args.get('sample_rate', '16000'))
     channels = int(request.args.get('channels', '1'))
