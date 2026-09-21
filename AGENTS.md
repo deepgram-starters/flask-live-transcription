@@ -97,7 +97,7 @@ The browser passes parameters to this backend. The backend reads them in `app.py
 | `channels` | `1` | `1`, `2` | Mono or stereo |
 
 ### Adding More Deepgram Features
-The browser can send these parameters to this starter's WebSocket endpoint:
+These parameters are not wired up yet. To add one, read it from `request.args` in `app.py` and pass it to `deepgram.listen.v1.connect(...)`:
 
 | Feature | Parameter | Example | Effect |
 |---------|-----------|---------|--------|
@@ -109,7 +109,7 @@ The browser can send these parameters to this starter's WebSocket endpoint:
 | Punctuation | `punctuate` | `true` | Auto-punctuation |
 | Keywords | `keywords` | `deepgram:2` | Boost keyword with weight |
 
-**Backend:** Read the parameter from `request.args` in the WebSocket proxy handler and pass it to `deepgram.listen.v1.connect(...)`. Parameters the backend does not read are dropped.
+**Backend:** Parameters the backend does not read are dropped.
 
 **Frontend:** The frontend sends these as query params when opening this starter's WebSocket. To add a UI control, edit `frontend/main.js` — add an input/checkbox and include it in the `URLSearchParams` when connecting.
 
