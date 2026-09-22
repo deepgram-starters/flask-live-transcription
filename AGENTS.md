@@ -111,7 +111,7 @@ These parameters are not wired up yet. To add one, read it from `request.args` i
 
 **Backend:** Parameters the backend does not read are dropped.
 
-**Frontend:** The frontend sends these as query params when opening this starter's WebSocket. To add a UI control, edit `frontend/main.js` — add an input/checkbox and include it in the `URLSearchParams` when connecting.
+**Frontend:** The pinned frontend currently sends only `model`, `language`, `encoding`, `sample_rate`, and `channels`. To add a UI control, edit `frontend/main.js` and add the parameter to its `URLSearchParams` when connecting.
 
 ### Changing Audio Format
 If changing from browser microphone (Linear16) to another source:

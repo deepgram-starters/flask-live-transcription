@@ -134,15 +134,24 @@ def _forward_to_browser(ws, message):
         print(f"Error forwarding to browser: {e}")
 
 
-def _forward_provider_error(ws, error, stop_event):
-    """Forward a safe provider error without exposing SDK request headers."""
+def _forward_connection_failed(ws, error, stop_event=None):
+    """Send the contract error frame without exposing SDK request headers."""
     status_code = getattr(error, "status_code", None)
-    description = "Deepgram transcription error"
-    if isinstance(status_code, int):
-        description += f" (HTTP {status_code})"
-    print(f"Deepgram error: {description}")
-    _forward_to_browser(ws, {"type": "Error", "description": description})
-    stop_event.set()
+    safe_status = status_code if isinstance(status_code, int) and 400 <= status_code < 600 else 500
+    description = f"Deepgram rejected the connection (HTTP {safe_status})"
+    print(f"Deepgram connection error: {description}")
+    _forward_to_browser(ws, {
+        "type": "Error",
+        "description": description,
+        "code": "CONNECTION_FAILED",
+        "status": safe_status,
+    })
+    if stop_event:
+        stop_event.set()
+    try:
+        ws.close(3000, "Deepgram connection failed")
+    except Exception:
+        pass
 
 # ============================================================================
 # SETUP - Initialize Flask, WebSocket, and CORS
@@ -272,7 +281,7 @@ def live_transcription(ws):
         ) as connection:
             connection.on(EventType.MESSAGE, lambda m: _forward_to_browser(ws, m))
             connection.on(EventType.CLOSE, lambda _: stop_event.set())
-            connection.on(EventType.ERROR, lambda e: _forward_provider_error(ws, e, stop_event))
+            connection.on(EventType.ERROR, lambda e: _forward_connection_failed(ws, e, stop_event))
 
             # start_listening() blocks, so run it in a background thread while the
             # main thread forwards browser audio/control messages to Deepgram.
@@ -313,11 +322,7 @@ def live_transcription(ws):
                     print(f"Error forwarding to Deepgram: {e}")
 
     except Exception as e:
-        print(f"Error setting up STT connection: {e}")
-        try:
-            ws.close(1011, "Internal server error")
-        except Exception:
-            pass
+        _forward_connection_failed(ws, e, stop_event)
         return
 
     finally:
