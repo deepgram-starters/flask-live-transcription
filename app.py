@@ -132,12 +132,34 @@ def _forward_to_browser(ws, message):
         print(f"Error forwarding to browser: {e}")
 
 
+def _safe_http_status(error):
+    """Return a client-safe HTTP status from a websocket connection error."""
+    response = getattr(error, "response", None)
+    status_code = getattr(response, "status_code", None)
+    return status_code if isinstance(status_code, int) and 400 <= status_code <= 599 else None
+
+
+def _forward_connection_failure(ws, error):
+    """Send a structured error before closing when Deepgram rejects the upgrade."""
+    status_code = _safe_http_status(error)
+    description = "Deepgram rejected the connection"
+    if status_code is not None:
+        description += f" (HTTP {status_code})"
+    _forward_to_browser(
+        ws,
+        {
+            "type": "Error",
+            "code": "CONNECTION_FAILED",
+            "description": description,
+        },
+    )
+
+
 def _forward_provider_error(ws, error, stop_event):
     """Notify the browser without serializing an SDK exception or its headers."""
-    status_code = getattr(error, "status_code", None)
-    description = "Deepgram transcription error"
-    if isinstance(status_code, int):
-        description += f" (HTTP {status_code})"
+    description = error.get("description") if isinstance(error, dict) else getattr(error, "description", None)
+    if not isinstance(description, str) or not description:
+        description = "Deepgram transcription error"
     print(f"Deepgram error: {description}")
     _forward_to_browser(ws, {"type": "Error", "description": description})
     stop_event.set()
@@ -318,6 +340,7 @@ def live_transcription(ws):
     except Exception as e:
         print(f"Error setting up STT connection: {e}")
         try:
+            _forward_connection_failure(ws, e)
             ws.close(1011, "Internal server error")
         except Exception:
             pass

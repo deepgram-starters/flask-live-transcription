@@ -1,6 +1,7 @@
 import json
 import os
 import unittest
+from types import SimpleNamespace
 
 os.environ.setdefault("DEEPGRAM_API_KEY", "test-key")
 
@@ -31,3 +32,34 @@ class LiveTranscriptionTests(unittest.TestCase):
 
     def test_interim_results_allow_explicit_opt_in(self):
         self.assertTrue(app._query_bool({"interim_results": "true"}, "interim_results", False))
+
+    def test_connection_failure_forwards_safe_http_status(self):
+        websocket = FakeWebSocket()
+        error = SimpleNamespace(response=SimpleNamespace(status_code=401))
+
+        app._forward_connection_failure(websocket, error)
+
+        self.assertEqual(
+            json.loads(websocket.messages[0]),
+            {
+                "type": "Error",
+                "code": "CONNECTION_FAILED",
+                "description": "Deepgram rejected the connection (HTTP 401)",
+            },
+        )
+
+    def test_provider_error_preserves_description(self):
+        websocket = FakeWebSocket()
+        stop_event = app.threading.Event()
+
+        app._forward_provider_error(
+            websocket,
+            SimpleNamespace(description="provider rejected the stream"),
+            stop_event,
+        )
+
+        self.assertEqual(
+            json.loads(websocket.messages[0]),
+            {"type": "Error", "description": "provider rejected the stream"},
+        )
+        self.assertTrue(stop_event.is_set())
