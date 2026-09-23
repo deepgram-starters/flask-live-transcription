@@ -122,12 +122,53 @@ def _forward_to_browser(ws, message):
             ws.send(bytes(message))
         elif isinstance(message, dict):
             ws.send(json.dumps(message))
+        elif message is None:
+            ws.send(json.dumps({"type": "Error", "description": "Deepgram transcription error"}))
         elif hasattr(message, "model_dump_json"):
             ws.send(message.model_dump_json())
         else:
             ws.send(json.dumps({"type": getattr(message, "type", "Unknown")}))
     except Exception as e:
         print(f"Error forwarding to browser: {e}")
+
+
+def _safe_http_status(error):
+    """Return a client-safe HTTP status from a websocket connection error."""
+    response = getattr(error, "response", None)
+    status_code = getattr(response, "status_code", None)
+    return status_code if isinstance(status_code, int) and 400 <= status_code <= 599 else None
+
+
+def _forward_connection_failure(ws, error):
+    """Send a structured error before closing when Deepgram rejects the upgrade."""
+    status_code = _safe_http_status(error)
+    description = "Deepgram rejected the connection"
+    if status_code is not None:
+        description += f" (HTTP {status_code})"
+    _forward_to_browser(
+        ws,
+        {
+            "type": "Error",
+            "code": "CONNECTION_FAILED",
+            "description": description,
+        },
+    )
+
+
+def _forward_provider_error(ws, error, stop_event):
+    """Notify the browser without serializing an SDK exception or its headers."""
+    description = error.get("description") if isinstance(error, dict) else getattr(error, "description", None)
+    if not isinstance(description, str) or not description:
+        description = "Deepgram transcription error"
+    print(f"Deepgram error: {description}")
+    _forward_to_browser(ws, {"type": "Error", "description": description})
+    stop_event.set()
+
+
+def _query_bool(params, name, default):
+    value = params.get(name)
+    return default if value is None else value.lower() == 'true'
+
 
 # ============================================================================
 # SETUP - Initialize Flask, WebSocket, and CORS
@@ -234,6 +275,7 @@ def live_transcription(ws):
     model = request.args.get('model', DEFAULT_MODEL)
     language = request.args.get('language', DEFAULT_LANGUAGE)
     smart_format = request.args.get('smart_format', 'true').lower() == 'true'
+    interim_results = _query_bool(request.args, 'interim_results', False)
     encoding = request.args.get('encoding', 'linear16')
     sample_rate = int(request.args.get('sample_rate', '16000'))
     channels = int(request.args.get('channels', '1'))
@@ -248,13 +290,14 @@ def live_transcription(ws):
             model=model,
             language=language,
             smart_format=smart_format,
+            interim_results=interim_results,
             encoding=encoding,
             sample_rate=sample_rate,
             channels=channels,
         ) as connection:
             connection.on(EventType.MESSAGE, lambda m: _forward_to_browser(ws, m))
             connection.on(EventType.CLOSE, lambda _: stop_event.set())
-            connection.on(EventType.ERROR, lambda e: (print(f"Deepgram error: {e}"), stop_event.set()))
+            connection.on(EventType.ERROR, lambda e: _forward_provider_error(ws, e, stop_event))
 
             # start_listening() blocks, so run it in a background thread while the
             # main thread forwards browser audio/control messages to Deepgram.
@@ -297,6 +340,7 @@ def live_transcription(ws):
     except Exception as e:
         print(f"Error setting up STT connection: {e}")
         try:
+            _forward_connection_failure(ws, e)
             ws.close(1011, "Internal server error")
         except Exception:
             pass

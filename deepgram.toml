@@ -55,3 +55,7 @@ message = "Build artifacts cleaned"
 [eject-frontend]
 command = "make eject-frontend"
 message = "Frontend ejected successfully"
+
+[test]
+command = "make test"
+message = "Running unit and conformance tests"
