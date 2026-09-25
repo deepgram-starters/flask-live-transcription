@@ -56,6 +56,10 @@ load_dotenv(override=False)
 DEFAULT_MODEL = "nova-3"
 DEFAULT_LANGUAGE = "en"
 
+
+def parse_stream_numeric_parameters(args):
+    return int(args.get('sample_rate', '16000')), int(args.get('channels', '1'))
+
 # Server configuration
 CONFIG = {
     "port": int(os.environ.get("PORT", 8081)),
@@ -277,8 +281,11 @@ def live_transcription(ws):
     smart_format = request.args.get('smart_format', 'true').lower() == 'true'
     interim_results = _query_bool(request.args, 'interim_results', False)
     encoding = request.args.get('encoding', 'linear16')
-    sample_rate = int(request.args.get('sample_rate', '16000'))
-    channels = int(request.args.get('channels', '1'))
+    try:
+        sample_rate, channels = parse_stream_numeric_parameters(request.args)
+    except ValueError:
+        ws.close(1008, "sample_rate and channels must be integers")
+        return
 
     print(f"STT Config - model: {model}, language: {language}, encoding: {encoding}, sample_rate: {sample_rate}, channels: {channels}")
 

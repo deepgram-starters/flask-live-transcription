@@ -34,6 +34,8 @@ Open [http://localhost:8080](http://localhost:8080) in your browser.
 
 ### Python & pnpm
 
+Python 3.10 or newer is required by the Deepgram SDK.
+
 ```bash
 git clone --recurse-submodules https://github.com/deepgram-starters/flask-live-transcription.git
 cd flask-live-transcription
