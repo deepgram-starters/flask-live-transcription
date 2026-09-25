@@ -1,4 +1,4 @@
-.PHONY: help check check-prereqs init install install-backend install-frontend start-backend start-frontend start test update clean status eject-frontend
+.PHONY: help check check-prereqs init install install-backend install-frontend start-backend start-frontend start test test-unit test-contract update clean status eject-frontend
 
 help:
 	@echo "Available commands:"
@@ -95,7 +95,13 @@ update:
 	git submodule update --remote --merge
 	@echo "Submodules updated!"
 
-test:
+test: test-unit test-contract
+
+test-unit:
+	@echo "==> Running Python unit tests..."
+	./venv/bin/python -m unittest discover -s tests
+
+test-contract:
 	@if [ ! -f ".env" ]; then \
 		echo "❌ Error: .env file not found. Copy sample.env to .env and add your DEEPGRAM_API_KEY"; \
 		exit 1; \
