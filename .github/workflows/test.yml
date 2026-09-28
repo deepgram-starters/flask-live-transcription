@@ -4,14 +4,22 @@ on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        sdk_version: ["7.7.0", ""]
+    env:
+      DEEPGRAM_API_KEY: test-only-key
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
       - run: pip install -r requirements.txt
-      - run: DEEPGRAM_API_KEY=test-key python -m unittest discover -s tests
+      - if: matrix.sdk_version != ''
+        run: pip install "deepgram-sdk==${{ matrix.sdk_version }}"
+      - run: python -m unittest discover -s tests
